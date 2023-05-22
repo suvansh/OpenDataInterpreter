@@ -8,7 +8,7 @@ const ModeButtons = ({mode, onModeChange}) => {
 
   return (
     <div>
-      <label className="mode-button">
+      <label className="mode-button text-gray-700 dark:text-gray-200">
         <input
           type="radio"
           name="GPT-3.5"
@@ -18,7 +18,7 @@ const ModeButtons = ({mode, onModeChange}) => {
         />
         GPT-3.5
       </label>
-      <label className="mode-button">
+      <label className="mode-button text-gray-700 dark:text-gray-200">
         <input
           type="radio"
           name="GPT-4"

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Dropzone from 'react-dropzone-uploader';
 import Papa from 'papaparse';
@@ -9,6 +9,9 @@ import Tooltip from '../components/Tooltip'
 import SocialMetaTags from '../components/SocialMetaTags';
 import NavBar from '../components/NavBar'
 import initSqlJs from 'sql.js';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
+
 
 
 const Home = () => {
@@ -23,10 +26,24 @@ const Home = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mode, setMode] = useState("GPT-4");
   const [allowLogging, setAllowLogging] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
 
   const handleSendMessage = (message) => {
     setMessages([...messages, { text: message, isUser: true, images: [] }]);
   };
+
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  const toggleDarkMode = () => {
+    setDarkMode(prevDarkMode => !prevDarkMode);
+  };  
 
   function inferTypes(csvData) {
     let types = {};
@@ -210,9 +227,9 @@ const Home = () => {
   return (
     <>
       <Head>
-          <title>Open Code Interpreter: Talk to your data.</title>
+        <title>Open Code Interpreter: Talk to your data.</title>
       </Head>
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <SocialMetaTags
           title="Open Code Interpreter: Talk to your data."
           description="Made with love and AI by Brilliantly."
@@ -220,9 +237,32 @@ const Home = () => {
           imageUrl="https://codeinterpreter.brilliantly.ai/logo.png"
         />
         <NavBar />
-        <div className="flex flex-col w-full max-w-7xl bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-          <h1 className="text-7xl font-bold text-center mb-4">Open Code Interpreter</h1>
-          <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        
+        <div className="flex flex-col w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <h1
+  className="text-6xl font-bold text-center mb-4"
+  style={{
+      fontFamily: 'Quicksand',
+      fontWeight: 'bold',
+      backgroundImage: 'linear-gradient(135deg, #CB5EEE 0%, #4BE1EC 100%)',
+      WebkitBackgroundClip: 'text',
+      backgroundClip: 'text',
+      color: 'transparent',
+  }}
+>
+  <span>
+    <button
+      className="focus:outline-none text-blue-500"  // Give the icon a color from the gradient
+      onClick={toggleDarkMode}
+      style={{ color: '#B67EEF' }}
+    >
+      <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
+    </button>pen Code Interpreter
+  </span>
+</h1>
+
+
+          <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <div className="mb-4">
               <Dropzone
                 onChangeStatus={handleChangeStatus}
@@ -232,7 +272,7 @@ const Home = () => {
             </div>
             {csvHeaders.map((header, index) => (
               <div className="mb-4 flex items-center" key={index}>
-                <label className="block text-gray-700 text-sm font-bold mb-2 w-1/3 text-right pr-4 align-middle" htmlFor={header}>
+                <label className="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2 w-1/3 text-right pr-4 align-middle" htmlFor={header}>
                   {header}
                 </label>
                 <input
@@ -255,7 +295,7 @@ const Home = () => {
                 onChange={(e) => setAllowLogging(prevAllowLogging => !prevAllowLogging)}
                 className="form-checkbox h-5 w-5 text-blue-600 mr-2"
               />
-              <label htmlFor="allowLogging" className="text-gray-700">
+              <label htmlFor="allowLogging" className="text-gray-700 dark:text-gray-200">
                 Allow server logging
               </label>
               <Tooltip content={ <>If checked, will log information that may include contents of uploaded data and server response.</> } />
@@ -263,7 +303,7 @@ const Home = () => {
 
 
             <div className="flex items-center justify-between">
-              {apiError && isErrorMessageVisible && <p className="text-red-500">{apiError}</p>}
+              {apiError && isErrorMessageVisible && <p className="text-red-500 dark:text-red-400">{apiError}</p>}
             </div>
           </form>
 
@@ -276,6 +316,7 @@ const Home = () => {
         </div>
       </div>
     </>
+
   );
 };
 
