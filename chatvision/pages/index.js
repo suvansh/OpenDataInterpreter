@@ -4,6 +4,7 @@ import Papa from 'papaparse';
 import 'react-dropzone-uploader/dist/styles.css';
 import Chat from '../components/Chat';
 import ModeButtons from '../components/ModeButtons'
+import Tooltip from '../components/Tooltip'
 import initSqlJs from 'sql.js';
 
 
@@ -18,6 +19,7 @@ const Home = () => {
   const [messages, setMessages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mode, setMode] = useState("GPT-4");
+  const [allowLogging, setAllowLogging] = useState(false);
 
   const handleSendMessage = (message) => {
     setMessages([...messages, { text: message, isUser: true, images: [] }]);
@@ -166,6 +168,7 @@ const Home = () => {
       setMessages(updatedMessages);
       formData.append('messages', JSON.stringify(updatedMessages));
       formData.append('model', mode)
+      formData.append('allowLogging', allowLogging)
       
       const res = await fetch('https://chatvision-server.brilliantly.ai/heavy', {
         method: 'POST',
@@ -229,7 +232,21 @@ const Home = () => {
             </div>
           ))}
           <ModeButtons mode={mode} onModeChange={setMode}/>
-          
+          <div className="flex items-center my-2">
+            <input
+              type="checkbox"
+              id="allowLogging"
+              checked={allowLogging}
+              onChange={(e) => setAllowLogging(prevAllowLogging => !prevAllowLogging)}
+              className="form-checkbox h-5 w-5 text-blue-600 mr-2"
+            />
+            <label htmlFor="allowLogging" className="text-gray-700">
+              Allow server logging
+            </label>
+            <Tooltip content={ <>If checked, will log information that may include contents of uploaded data and server response.</> } />
+          </div>
+
+
           <div className="flex items-center justify-between">
             {apiError && isErrorMessageVisible && <p className="text-red-500">{apiError}</p>}
           </div>
