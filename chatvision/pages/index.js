@@ -1,10 +1,13 @@
 import { useState } from 'react';
+import Head from 'next/head';
 import Dropzone from 'react-dropzone-uploader';
 import Papa from 'papaparse';
 import 'react-dropzone-uploader/dist/styles.css';
 import Chat from '../components/Chat';
 import ModeButtons from '../components/ModeButtons'
 import Tooltip from '../components/Tooltip'
+import SocialMetaTags from '../components/SocialMetaTags';
+import NavBar from '../components/NavBar'
 import initSqlJs from 'sql.js';
 
 
@@ -170,7 +173,7 @@ const Home = () => {
       formData.append('model', mode)
       formData.append('allowLogging', allowLogging)
       
-      const res = await fetch('https://chatvision-server.brilliantly.ai/heavy', {
+      const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
         method: 'POST',
         body: formData,
       });	  
@@ -205,61 +208,74 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="flex flex-col w-full max-w-7xl bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-          <div className="mb-4">
-            <Dropzone
-              onChangeStatus={handleChangeStatus}
-              accept=".csv"
-              maxFiles={1}
-            />
-          </div>
-          {csvHeaders.map((header, index) => (
-            <div className="mb-4 flex items-center" key={index}>
-              <label className="block text-gray-700 text-sm font-bold mb-2 w-1/3 text-right pr-4 align-middle" htmlFor={header}>
-                {header}
-              </label>
-              <input
-                className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex-grow"
-                id={header}
-                type="text"
-                placeholder={`Description of ${header}`}
-                value={headerValues[header] || ''}
-                onChange={(e) => handleInputChange(header, e.target.value)}
+    <>
+      <Head>
+          <title>Open Code Interpreter: Talk to your data.</title>
+          <SocialMetaTags
+              title="Open Code Interpreter: Talk to your data."
+              description="Made with love and AI by Brilliantly."
+              url="https://openci.brilliantly.ai/"
+              imageUrl="https://openci.brilliantly.ai/logo.png"
+          />
+      </Head>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <NavBar />
+        <div className="flex flex-col w-full max-w-7xl bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+          <h1 className="text-7xl font-bold text-center mb-4">Open Code Interpreter</h1>
+          <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+            <div className="mb-4">
+              <Dropzone
+                onChangeStatus={handleChangeStatus}
+                accept=".csv"
+                maxFiles={1}
               />
-              <button type="button" onClick={() => removeHeader(index, header)} className="ml-2 py-2">✕</button>
             </div>
-          ))}
-          <ModeButtons mode={mode} onModeChange={setMode}/>
-          <div className="flex items-center my-2">
-            <input
-              type="checkbox"
-              id="allowLogging"
-              checked={allowLogging}
-              onChange={(e) => setAllowLogging(prevAllowLogging => !prevAllowLogging)}
-              className="form-checkbox h-5 w-5 text-blue-600 mr-2"
-            />
-            <label htmlFor="allowLogging" className="text-gray-700">
-              Allow server logging
-            </label>
-            <Tooltip content={ <>If checked, will log information that may include contents of uploaded data and server response.</> } />
-          </div>
+            {csvHeaders.map((header, index) => (
+              <div className="mb-4 flex items-center" key={index}>
+                <label className="block text-gray-700 text-sm font-bold mb-2 w-1/3 text-right pr-4 align-middle" htmlFor={header}>
+                  {header}
+                </label>
+                <input
+                  className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex-grow"
+                  id={header}
+                  type="text"
+                  placeholder={`Description of ${header}`}
+                  value={headerValues[header] || ''}
+                  onChange={(e) => handleInputChange(header, e.target.value)}
+                />
+                <button type="button" onClick={() => removeHeader(index, header)} className="ml-2 py-2">✕</button>
+              </div>
+            ))}
+            <ModeButtons mode={mode} onModeChange={setMode}/>
+            <div className="flex items-center my-2">
+              <input
+                type="checkbox"
+                id="allowLogging"
+                checked={allowLogging}
+                onChange={(e) => setAllowLogging(prevAllowLogging => !prevAllowLogging)}
+                className="form-checkbox h-5 w-5 text-blue-600 mr-2"
+              />
+              <label htmlFor="allowLogging" className="text-gray-700">
+                Allow server logging
+              </label>
+              <Tooltip content={ <>If checked, will log information that may include contents of uploaded data and server response.</> } />
+            </div>
 
 
-          <div className="flex items-center justify-between">
-            {apiError && isErrorMessageVisible && <p className="text-red-500">{apiError}</p>}
-          </div>
-        </form>
+            <div className="flex items-center justify-between">
+              {apiError && isErrorMessageVisible && <p className="text-red-500">{apiError}</p>}
+            </div>
+          </form>
 
-        <Chat 
-          messages={messages}
-          onSendMessage={handleSubmit}
-          isSubmitting={isSubmitting}
-        />
+          <Chat 
+            messages={messages}
+            onSendMessage={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
 
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
