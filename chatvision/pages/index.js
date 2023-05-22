@@ -12,7 +12,6 @@ const Home = () => {
   const [sqlDb, setSqlDb] = useState(null);
   const [csvData, setCsvData] = useState([]);
   const [csvHeaders, setCsvHeaders] = useState([]);
-  const [submitStatus, setSubmitStatus] = useState('');
   const [apiError, setApiError] = useState('');
   const [headerValues, setHeaderValues] = useState({});
   const [isErrorMessageVisible, setIsErrorMessageVisible] = useState(false);
@@ -168,13 +167,12 @@ const Home = () => {
       formData.append('messages', JSON.stringify(updatedMessages));
       formData.append('model', mode)
       
-      const res = await fetch('http://localhost:8000/heavy', {
+      const res = await fetch('https://chatvision-server.brilliantly.ai/heavy', {
         method: 'POST',
         body: formData,
       });	  
 	  
       if (res.status === 200) {
-		    console.log('Success');
         const responseBody = await res.json();
         // // sql
         // let sqlCode = responseBody['result'];
@@ -185,7 +183,6 @@ const Home = () => {
         let asstMsg = responseBody.answer;
         setMessages([...updatedMessages, { text: asstMsg, isUser: false, images: responseBody.images }]);
         console.log({ text: asstMsg, isUser: false, images: responseBody.images })
-        setSubmitStatus('Success');
       }
     } catch (err) {
 	    console.log(err);
@@ -234,7 +231,6 @@ const Home = () => {
           <ModeButtons mode={mode} onModeChange={setMode}/>
           
           <div className="flex items-center justify-between">
-            {submitStatus === 'Success' && <p className="text-green-500">Success</p>}
             {apiError && isErrorMessageVisible && <p className="text-red-500">{apiError}</p>}
           </div>
         </form>
