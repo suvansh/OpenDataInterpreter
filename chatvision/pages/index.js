@@ -214,8 +214,8 @@ const Home = () => {
           <SocialMetaTags
               title="Open Code Interpreter: Talk to your data."
               description="Made with love and AI by Brilliantly."
-              url="https://openci.brilliantly.ai/"
-              imageUrl="https://openci.brilliantly.ai/logo.png"
+              url="https://codeinterpreter.brilliantly.ai/"
+              imageUrl="https://codeinterpreter.brilliantly.ai/logo.png"
           />
       </Head>
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
