@@ -1,0 +1,163 @@
+2023-05-21 16:30:33,920 - __main__ - INFO - SQL code: SELECT AVG(Weight_Apr - Weight_Sep) AS avg_weight_change
+FROM mytable
+WHERE Sex = 'M'
+2023-05-21 16:31:42,664 - __main__ - INFO - SQL code: SELECT AVG(Weight_Apr - Weight_Sep) AS avg_weight_change
+FROM mytable
+WHERE Sex = 'M'
+2023-05-21 16:32:10,522 - __main__ - INFO - SQL code: SELECT AVG(Weight_Apr - Weight_Sep) AS avg_weight_change
+FROM mytable
+WHERE Sex = 'M'
+2023-05-21 16:32:14,465 - __main__ - INFO - Standalone Query: What is the average weight change between September and April for women?
+2023-05-21 16:32:16,191 - __main__ - INFO - SQL code: [{"columns":["avg_weight_change"],"values":[[1.0875]]}]
+2023-05-21 16:33:01,280 - __main__ - INFO - SQL code: SELECT AVG(Weight_Apr - Weight_Sep) AS avg_weight_change
+FROM mytable
+WHERE Sex = 'M'
+2023-05-21 16:33:06,696 - __main__ - INFO - Standalone Query: What is the average weight change between September and April for women?
+2023-05-21 16:33:08,789 - __main__ - INFO - SQL code: [{"columns":["avg_weight_change"],"values":[[-0.64]]}]
+2023-05-21 16:34:27,957 - __main__ - INFO - SQL code: SELECT AVG(Weight_Apr - Weight_Sep) AS avg_weight_change
+FROM mytable
+WHERE Sex = 'M'
+2023-05-21 16:34:31,763 - __main__ - INFO - Standalone Query: What is the average weight change between September and April for women?
+2023-05-21 16:34:33,198 - __main__ - INFO - SQL code: [{"columns":["avg_weight_change"],"values":[[-0.375]]}]
+2023-05-21 16:35:11,615 - __main__ - INFO - SQL code: SELECT AVG(Weight_Apr - Weight_Sep) AS avg_weight_change
+FROM mytable
+WHERE Sex = 'male';
+2023-05-21 16:35:19,960 - __main__ - INFO - Standalone Query: What is the average weight change for men between September and April?
+2023-05-21 16:35:21,883 - __main__ - INFO - SQL code: SELECT AVG(Weight_Apr - Weight_Sep) AS avg_weight_change
+FROM mytable
+WHERE Sex = 'M'
+2023-05-21 16:35:27,881 - __main__ - INFO - Standalone Query: What is the average weight change between September and April for women?
+2023-05-21 16:35:30,035 - __main__ - INFO - SQL code: SELECT AVG(Weight_Apr - Weight_Sep) AS avg_weight_change
+FROM mytable
+WHERE Sex = 'F'
+2023-05-21 17:11:31,046 - __main__ - INFO - SQL code: Here's the JavaScript code to generate the scatter plot you requested:
+
+```
+function plotData(data) {
+  var trace1 = {
+    x: data.map(row => row['Weight_Sep']),
+    y: data.map(row => row['BMI_Sep']),
+    mode: 'markers',
+    type: 'scatter'
+  };
+
+  var layout = {
+    xaxis: {
+      title: 'Weight in September'
+    },
+    yaxis: {
+      title: 'BMI in September'
+    }
+  };
+
+  Plotly.newPlot('graphDiv', [trace1], layout);
+}
+```
+
+This code creates a scatter plot with weight in September on the x-axis and BMI in September on the y-axis. The `mode` and `type` properties are set to create a scatter plot with markers. Finally, the `layout` object is used to add axis titles to the plot.
+2023-05-22 02:40:56,487 - __main__ - INFO - Standalone Query: What type of graph would you like me to create comparing the weights in September and April?
+2023-05-22 02:48:51,204 - __main__ - INFO - Standalone Query: What type of data are you looking to analyze with a scatterplot comparing weights in September and April?
+2023-05-22 02:49:14,399 - __main__ - INFO - Standalone Query: What would you like me to create a scatterplot of?
+2023-05-22 02:49:20,576 - __main__ - INFO - LLM Response: CODE: out_variable = "ERROR: Sorry, I don't know how to answer that question."
+OUT_VARIABLE: out_variable
+IMG_PATHS: []
+2023-05-22 02:49:20,577 - __main__ - INFO - Final output: ERROR: Sorry, I don't know how to answer that question.
+2023-05-22 02:49:20,577 - __main__ - INFO - Image URLs: None
+2023-05-22 02:50:08,486 - __main__ - INFO - LLM Response: CODE: plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Weight_Sep', y='Weight_Apr', data=df)
+plt.title("Students' Weights in September vs April")
+plt.xlabel('Weight in September')
+plt.ylabel('Weight in April')
+img_path = 'scatterplot_weights_sep_apr.png'
+plt.savefig(img_path)
+out_variable="Here is a scatterplot of students' weights in September vs April."
+OUT_VARIABLE: out_variable
+IMG_PATHS: ['scatterplot_weights_sep_apr.png']
+2023-05-22 02:50:08,885 - __main__ - ERROR - An error occurred: Could not interpret value `Weight_Sep` for parameter `x`
+Traceback (most recent call last):
+  File "/Users/suvansh/repos/chatvision/backend/app.py", line 69, in process_file_df
+    new_globals = run_code(df, code)
+  File "/Users/suvansh/repos/chatvision/backend/utils.py", line 125, in run_code
+    exec(code, new_globals)
+  File "<string>", line 2, in <module>
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/relational.py", line 742, in scatterplot
+    p = _ScatterPlotter(data=data, variables=variables, legend=legend)
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/relational.py", line 538, in __init__
+    super().__init__(data=data, variables=variables)
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/_oldcore.py", line 640, in __init__
+    self.assign_variables(data, variables)
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/_oldcore.py", line 701, in assign_variables
+    plot_data, variables = self._assign_variables_longform(
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/_oldcore.py", line 938, in _assign_variables_longform
+    raise ValueError(err)
+ValueError: Could not interpret value `Weight_Sep` for parameter `x`
+2023-05-22 02:59:52,888 - __main__ - INFO - LLM Response: CODE: male_students = df[df['Sex'] == 'M']
+
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Weight_Sep', y='Weight_Apr', data=male_students)
+plt.title("Male Students' Weight in September vs April")
+plt.xlabel('Weight in September')
+plt.ylabel('Weight in April')
+img_path = 'male_students_weight_scatterplot.png'
+plt.savefig(img_path)
+out_variable = "Here is a scatterplot of male students' weight in September versus their weight in April."
+OUT_VARIABLE: out_variable
+IMG_PATHS: ['male_students_weight_scatterplot.png']
+2023-05-22 02:59:52,906 - __main__ - ERROR - An error occurred: Could not interpret value `Weight_Sep` for parameter `x`
+Traceback (most recent call last):
+  File "/Users/suvansh/repos/chatvision/backend/app.py", line 69, in process_file_df
+    new_globals = run_code(df, code)
+  File "/Users/suvansh/repos/chatvision/backend/utils.py", line 125, in run_code
+    exec(code, new_globals)
+  File "<string>", line 4, in <module>
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/relational.py", line 742, in scatterplot
+    p = _ScatterPlotter(data=data, variables=variables, legend=legend)
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/relational.py", line 538, in __init__
+    super().__init__(data=data, variables=variables)
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/_oldcore.py", line 640, in __init__
+    self.assign_variables(data, variables)
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/_oldcore.py", line 701, in assign_variables
+    plot_data, variables = self._assign_variables_longform(
+  File "/opt/anaconda3/envs/chatvision/lib/python3.9/site-packages/seaborn/_oldcore.py", line 938, in _assign_variables_longform
+    raise ValueError(err)
+ValueError: Could not interpret value `Weight_Sep` for parameter `x`
+2023-05-22 03:14:31,659 - __main__ - INFO - LLM Response: CODE: male_students = df[df['Sex'] == 'M']
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Weight_Sep', y='Weight_Apr', data=male_students)
+plt.title("Scatterplot of Male Students' Weight in September vs. April")
+plt.xlabel('Weight in September')
+plt.ylabel('Weight in April')
+img_path = 'male_students_weight_sep_vs_apr.png'
+plt.savefig(img_path)
+out_variable = "Here is a scatterplot of male students' weight in September vs. their weight in April."
+OUT_VARIABLE: out_variable
+IMG_PATHS: ['male_students_weight_sep_vs_apr.png']
+2023-05-22 03:14:31,874 - __main__ - INFO - Final output: Here is a scatterplot of male students' weight in September vs. their weight in April.
+2023-05-22 03:14:32,405 - __main__ - INFO - Image URLs: ['https://iili.io/HgvTlaa.png']
+2023-05-22 03:17:13,414 - __main__ - INFO - LLM Response: CODE: male_students = df[df['Sex'] == 'M']
+
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Weight_Sep', y='Weight_Apr', data=male_students)
+plt.title("Male Students' Weight in September vs. April")
+plt.xlabel('Weight in September')
+plt.ylabel('Weight in April')
+img_path = 'male_students_weight_scatterplot.png'
+plt.savefig(img_path)
+out_variable = "Here is a scatterplot of the male students' weight in September vs. in April."
+OUT_VARIABLE: out_variable
+IMG_PATHS: ['male_students_weight_scatterplot.png']
+2023-05-22 03:17:13,520 - __main__ - INFO - Final output: Here is a scatterplot of the male students' weight in September vs. in April.
+2023-05-22 03:17:14,362 - __main__ - INFO - Image URLs: ['https://iili.io/HgvuRRf.png']
+2023-05-22 03:18:46,257 - __main__ - INFO - LLM Response: CODE: female_students = df[df['Sex'] == 'F']
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Weight_Sep', y='Weight_Apr', data=female_students)
+plt.title("Female Students' Weight in September vs April")
+plt.xlabel('Weight in September')
+plt.ylabel('Weight in April')
+img_path = 'female_students_weight_sep_apr.png'
+plt.savefig(img_path)
+out_variable = "Here is a scatterplot of female students' weight in September vs April."
+OUT_VARIABLE: out_variable
+IMG_PATHS: ['female_students_weight_sep_apr.png']
+2023-05-22 03:18:46,355 - __main__ - INFO - Final output: Here is a scatterplot of female students' weight in September vs April.
+2023-05-22 03:18:47,280 - __main__ - INFO - Image URLs: ['https://iili.io/HgvuZ0X.png']

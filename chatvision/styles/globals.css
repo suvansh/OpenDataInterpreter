@@ -1,0 +1,62 @@
+/* styles/globals.css */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    margin-left: 8px;
+  }
+  
+  .tooltip .questionMark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    font-weight: bold;
+    background-color: #a6adbb;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .tooltip .tooltipText {
+    width: 200px;
+    background-color: #333;
+    color: #a6adbb;
+    text-align: center;
+    /* padding: 5px 0; */
+    padding: 10px;
+    border-radius: 4px;
+  
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+  
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.3s;
+  }
+  
+  .tooltip .tooltipText a {
+    color: #21b2a5;
+    text-decoration: underline;
+  }
+  
+  .tooltip .tooltipText a:hover {
+    text-decoration: none;
+  }
+
+  .mode-button {
+    display: inline-block;
+    margin-right: 16px;
+    cursor: pointer;
+  }
+  
+  .mode-button input[type='radio'] {
+    margin-right: 4px;
+  }
