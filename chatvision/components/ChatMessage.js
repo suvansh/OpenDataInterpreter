@@ -21,8 +21,8 @@ function ChatMessage({ message, isUser, images }) {
                         <Image
                             src={image}
                             alt="Image for user query"
-                            width={1200}
-                            height={800}
+                            width={800}
+                            height={600}
                         />
                     </a>
                 </div>

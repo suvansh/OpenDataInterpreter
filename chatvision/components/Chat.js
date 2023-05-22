@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import ChatMessage from './ChatMessage';
 
-
 function Chat({ messages, onSendMessage, isSubmitting }) {
   const [newMessage, setNewMessage] = useState('');
 
@@ -21,14 +20,19 @@ function Chat({ messages, onSendMessage, isSubmitting }) {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-4">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          className="border-2 border-gray-300 rounded-md px-2 py-1 w-full"
-          placeholder="Type a message"
-          disabled={isSubmitting}
-        />
+        <div className="flex items-center">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            className="border-2 border-gray-300 rounded-md px-2 py-1 flex-grow"
+            placeholder="Type a message"
+            disabled={isSubmitting}
+          />
+          <button type="submit" className="ml-2 bg-blue-500 text-white px-3 py-1 rounded-md" disabled={isSubmitting}>
+            Send
+          </button>
+        </div>
       </form>
     </div>
   );
