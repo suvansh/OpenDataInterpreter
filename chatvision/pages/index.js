@@ -211,14 +211,14 @@ const Home = () => {
     <>
       <Head>
           <title>Open Code Interpreter: Talk to your data.</title>
-          <SocialMetaTags
-              title="Open Code Interpreter: Talk to your data."
-              description="Made with love and AI by Brilliantly."
-              url="https://codeinterpreter.brilliantly.ai/"
-              imageUrl="https://codeinterpreter.brilliantly.ai/logo.png"
-          />
       </Head>
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <SocialMetaTags
+          title="Open Code Interpreter: Talk to your data."
+          description="Made with love and AI by Brilliantly."
+          url="https://codeinterpreter.brilliantly.ai/"
+          imageUrl="https://codeinterpreter.brilliantly.ai/logo.png"
+        />
         <NavBar />
         <div className="flex flex-col w-full max-w-7xl bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
           <h1 className="text-7xl font-bold text-center mb-4">Open Code Interpreter</h1>
