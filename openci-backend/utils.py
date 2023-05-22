@@ -68,12 +68,14 @@ async def upload_images(images):
     return [url for url in img_urls if url is not None]
 
 def check_code(code):
-    # some of these are copilot-suggested and I rolled with them
     banned_words = ["open", "exec", "eval", "os", "sys", "subprocess", "pickle", "shutil", "urllib", "socket", "threading", "multiprocessing", "asyncio", "ctypes", "tkinter", "pywin", "pyqt", "pyglet", "pygame", "pyautogui", "pyperclip", "pyttsx3", "pyaudio"]
-    # check if any banned words appear in the code
-    for word in banned_words:
-        if word in code:
-            return False
+    
+    # Combine the banned words into a regex pattern
+    pattern = "|".join(r"\b" + word + r"\b" for word in banned_words)
+    
+    # If a banned word is found in the code, return False
+    if re.search(pattern, code):
+        return False
     return True
 
 allowed_builtins = {

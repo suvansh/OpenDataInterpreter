@@ -238,82 +238,103 @@ const Home = () => {
         />
         <NavBar />
         
-        <div className="flex flex-col w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <h1
-  className="text-6xl font-bold text-center mb-4"
-  style={{
-      fontFamily: 'Quicksand',
-      fontWeight: 'bold',
-      backgroundImage: 'linear-gradient(135deg, #CB5EEE 0%, #4BE1EC 100%)',
-      WebkitBackgroundClip: 'text',
-      backgroundClip: 'text',
-      color: 'transparent',
-  }}
->
-  <span>
-    <button
-      className="focus:outline-none text-blue-500"  // Give the icon a color from the gradient
-      onClick={toggleDarkMode}
-      style={{ color: '#B67EEF' }}
-    >
-      <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
-    </button>pen Code Interpreter
-  </span>
-</h1>
+        <div
+          className="flex flex-col w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4 overflow-auto"
+          style={{height: 'calc(100vh - 100px)', paddingTop: '100px'}}
+        >
+          <h1
+            className="text-6xl font-bold text-center mb-4"
+            style={{
+                fontFamily: 'Quicksand',
+                fontWeight: 'bold',
+                backgroundImage: 'linear-gradient(135deg, #CB5EEE 0%, #4BE1EC 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+            }}
+          >
+            <span>
+              <button
+                className="focus:outline-none"
+                onClick={toggleDarkMode}
+                style={{ color: '#B67EEF' }}
+              >
+                <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
+              </button>pen Code Interpreter
+            </span>
+          </h1>
+          <div className="flex flex-col lg:flex-row w-full">
+            <div className="w-full lg:w-1/2">
+              <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
+                <div className="mb-4 bg-gray-400">
+                  <Dropzone
+                    inputContent="Drag a CSV file or Click to Browse"
+                    onChangeStatus={handleChangeStatus}
+                    accept=".csv"
+                    maxFiles={1}
+                  />
+                </div>
+                {csvHeaders.map((header, index) => (
+                  <div className="mb-4 flex items-center" key={index}>
+                    <label className="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2 w-1/3 text-right pr-4 align-middle" htmlFor={header}>
+                      {header}
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex-grow"
+                      id={header}
+                      type="text"
+                      placeholder={`Description of ${header}`}
+                      value={headerValues[header] || ''}
+                      onChange={(e) => handleInputChange(header, e.target.value)}
+                    />
+                    <button type="button" onClick={() => removeHeader(index, header)} className="ml-2 py-2">✕</button>
+                  </div>
+                ))}
+                <ModeButtons mode={mode} onModeChange={setMode}/>
+                <div className="flex items-center my-2">
+                  <input
+                    type="checkbox"
+                    id="allowLogging"
+                    checked={allowLogging}
+                    onChange={(e) => setAllowLogging(prevAllowLogging => !prevAllowLogging)}
+                    className="form-checkbox h-5 w-5 text-blue-600 mr-2"
+                  />
+                  <label htmlFor="allowLogging" className="text-gray-700 dark:text-gray-200">
+                    Allow server logging
+                  </label>
+                  <Tooltip content={ <>If checked, will log information that may include contents of uploaded data and server response.</> } />
+                </div>
 
 
-          <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <div className="mb-4">
-              <Dropzone
-                inputContent="Drag a CSV file or Click to Browse"
-                onChangeStatus={handleChangeStatus}
-                accept=".csv"
-                maxFiles={1}
-              />
-            </div>
-            {csvHeaders.map((header, index) => (
-              <div className="mb-4 flex items-center" key={index}>
-                <label className="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2 w-1/3 text-right pr-4 align-middle" htmlFor={header}>
-                  {header}
-                </label>
-                <input
-                  className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex-grow"
-                  id={header}
-                  type="text"
-                  placeholder={`Description of ${header}`}
-                  value={headerValues[header] || ''}
-                  onChange={(e) => handleInputChange(header, e.target.value)}
-                />
-                <button type="button" onClick={() => removeHeader(index, header)} className="ml-2 py-2">✕</button>
+                <div className="flex items-center justify-between">
+                  {apiError && isErrorMessageVisible && <p className="text-red-500 dark:text-red-400">{apiError}</p>}
+                </div>
+              </form>
+              <div className="overflow-y-auto" style={{ maxHeight: "50vh" }}>
+                <table className="text-gray-700 dark:text-gray-200">
+                  <thead>
+                    <tr>
+                      {csvData[0] && Object.values(csvData[0]).map(val => <th key={val}>{val}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {csvData.slice(1).map((row, index) => (
+                      <tr key={index}>
+                        {Object.values(row).map((value, index) => <td key={index}>{value}</td>)}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-            <ModeButtons mode={mode} onModeChange={setMode}/>
-            <div className="flex items-center my-2">
-              <input
-                type="checkbox"
-                id="allowLogging"
-                checked={allowLogging}
-                onChange={(e) => setAllowLogging(prevAllowLogging => !prevAllowLogging)}
-                className="form-checkbox h-5 w-5 text-blue-600 mr-2"
+            </div>
+            <div className="w-full lg:w-1/2">
+              <Chat 
+                messages={messages}
+                onSendMessage={handleSubmit}
+                isSubmitting={isSubmitting}
               />
-              <label htmlFor="allowLogging" className="text-gray-700 dark:text-gray-200">
-                Allow server logging
-              </label>
-              <Tooltip content={ <>If checked, will log information that may include contents of uploaded data and server response.</> } />
             </div>
-
-
-            <div className="flex items-center justify-between">
-              {apiError && isErrorMessageVisible && <p className="text-red-500 dark:text-red-400">{apiError}</p>}
-            </div>
-          </form>
-
-          <Chat 
-            messages={messages}
-            onSendMessage={handleSubmit}
-            isSubmitting={isSubmitting}
-          />
-
+          </div>
         </div>
       </div>
     </>
@@ -322,4 +343,3 @@ const Home = () => {
 };
 
 export default Home;
-
