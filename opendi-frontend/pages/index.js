@@ -124,8 +124,8 @@ const Home = () => {
       formData.append('model', mode)
       formData.append('allowLogging', allowLogging)
       
-      // const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
-      const res = await fetch('http://localhost:8000/heavy', {
+      const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
+      // const res = await fetch('http://localhost:8000/heavy', {
         method: 'POST',
         body: formData,
       });	  
@@ -156,14 +156,14 @@ const Home = () => {
   return (
     <>
       <Head>
-        <title>Open Code Interpreter: Talk to your data.</title>
+        <title>Open Data Interpreter: Talk to your data.</title>
       </Head>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <SocialMetaTags
-          title="Open Code Interpreter: Talk to your data."
+          title="Open Data Interpreter: Talk to your data."
           description="Made with love and AI by Brilliantly."
-          url="https://codeinterpreter.brilliantly.ai/"
-          imageUrl="https://codeinterpreter.brilliantly.ai/logo.png"
+          url="https://datainterpreter.brilliantly.ai/"
+          imageUrl="https://datainterpreter.brilliantly.ai/logo.png"
         />
         <NavBar />
         
@@ -189,7 +189,7 @@ const Home = () => {
                 style={{ color: '#B67EEF' }}
               >
                 <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
-              </button>pen Code Interpreter
+              </button>pen Data Interpreter
             </span>
           </h1>
           <div className="flex flex-grow overflow-auto">
