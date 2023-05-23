@@ -10,7 +10,7 @@ const Tooltip = ({ content }) => {
   return (
     <div className="tooltip" onClick={toggleTooltip}>
       <span className="questionMark">?</span>
-      {isOpen && <div className="tooltipText">{content}</div>}
+      {isOpen && <div className="tooltipText text-left">{content}</div>}
     </div>
   );
 };

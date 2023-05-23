@@ -19,13 +19,17 @@ const Home = () => {
   const [sqlDb, setSqlDb] = useState(null);
   const [csvData, setCsvData] = useState([]);
   const [csvHeaders, setCsvHeaders] = useState([]);
-  const [apiError, setApiError] = useState('');
   const [headerValues, setHeaderValues] = useState({});
+
+  const [apiError, setApiError] = useState('');
   const [isErrorMessageVisible, setIsErrorMessageVisible] = useState(false);
+
   const [messages, setMessages] = useState([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mode, setMode] = useState("GPT-4");
   const [allowLogging, setAllowLogging] = useState(false);
+  
   const [darkMode, setDarkMode] = useState(false);
 
 
@@ -206,7 +210,6 @@ const Home = () => {
         // let asstMsg = JSON.stringify(sqlOut);
         let asstMsg = responseBody.answer;
         setMessages([...updatedMessages, { text: asstMsg, isUser: false, images: responseBody.images }]);
-        console.log({ text: asstMsg, isUser: false, images: responseBody.images })
       }
     } catch (err) {
 	    console.log(err);
@@ -304,7 +307,7 @@ const Home = () => {
                   <label htmlFor="allowLogging" className="text-gray-700 dark:text-gray-200">
                     Allow server logging
                   </label>
-                  <Tooltip content={ <>If checked, will log information that may include contents of uploaded data and server response.</> } />
+                  <Tooltip content={ <>Logs may include parts of uploaded data and the server response. Either way, your file is not stored. </> } />
                 </div>
 
 
@@ -332,6 +335,7 @@ const Home = () => {
             <div className="w-full lg:w-1/2 overflow-auto" style={{ maxHeight: `calc(90vh - 100px)` }}>
               <Chat 
                 messages={messages}
+                setMessages={setMessages}
                 onSendMessage={handleSubmit}
                 isSubmitting={isSubmitting}
               />

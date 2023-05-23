@@ -26,9 +26,10 @@
     width: 200px;
     background-color: #333;
     color: #a6adbb;
-    text-align: center;
+    text-align: left;
     /* padding: 5px 0; */
     padding: 10px;
+    padding-left: 15px;
     border-radius: 4px;
   
     position: absolute;
