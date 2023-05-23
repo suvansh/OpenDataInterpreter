@@ -8,7 +8,6 @@ import ModeButtons from '../components/ModeButtons'
 import Tooltip from '../components/Tooltip'
 import SocialMetaTags from '../components/SocialMetaTags';
 import NavBar from '../components/NavBar'
-import initSqlJs from 'sql.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 
@@ -47,71 +46,7 @@ const Home = () => {
 
   const toggleDarkMode = () => {
     setDarkMode(prevDarkMode => !prevDarkMode);
-  };  
-
-  function inferTypes(csvData) {
-    let types = {};
-    let headers = csvData[0];
-    let firstRow = csvData[1];
-
-    // zip headers and first row together
-    for (let i = 0; i < headers.length; i++) {
-      let value = firstRow[i];
-      let inferredType;
-  
-      // Check if the value can be parsed as a number
-      if (!isNaN(value) && isFinite(value)) {
-        // Distinguish between integers and floats
-        inferredType = value.indexOf('.') === -1 ? 'INT' : 'FLOAT';
-      } else if (new Date(value).toString() !== 'Invalid Date') {
-        // Check if the value can be parsed as a date
-        inferredType = 'DATE';
-      } else {
-        // If it can't be parsed as a number or a date, assume it's a string
-        inferredType = 'STRING';
-      }
-  
-      types[headers[i]] = inferredType;
-    }
-  
-    return types;
-  }
-
-  async function createSqlJsTable(data) {
-    const types = inferTypes(data);
-    let sqlCreateTable = `CREATE TABLE mytable (`;
-    for (let key in types) {
-      sqlCreateTable += `${key} ${types[key]},`;
-    }
-    sqlCreateTable = sqlCreateTable.slice(0, -1); // Remove the trailing comma
-    sqlCreateTable += `);`;
-  
-    // Create insert query
-    let sqlInsert = `INSERT INTO mytable (${Object.keys(types).join(', ')}) VALUES `;
-    data.slice(1).forEach(row => {
-      if ((row.length === 0) || (row[0].trim() === '')) return; // Skip empty rows
-      let values = Object.values(row).map(val => 
-        isNaN(val) ? `'${val}'` : val  // Check if the value is numeric or string
-      ).join(', ');
-  
-      sqlInsert += `(${values}), `;
-    });
-  
-    sqlInsert = sqlInsert.slice(0, -2); // Remove the trailing comma and space
-    sqlInsert += ';';
-  
-    // Initialize the SQL.js library
-    const SQL = await initSqlJs({locateFile: file => "https://sql.js.org/dist/sql-wasm.wasm"});
-  
-    // Create a database
-    const db = new SQL.Database();
-  
-    // Execute the create table and insert data queries
-    db.exec(sqlCreateTable);
-    db.exec(sqlInsert);
-  
-    return db;  // Return the database for further use
-  }
+  };
 
   const handleChangeStatus = async ({ meta, file }, status) => {
     if (status === 'done') {
@@ -135,11 +70,6 @@ const Home = () => {
       }, {});
 
       setHeaderValues(initialHeaderValues);
-
-      // Wait for createSqlJsTable to finish and then update the state
-      // TODO sql stuff later
-      // const db = await createSqlJsTable(results.data);
-      // setSqlDb(db);
     }
     else if (status === 'removed') {
       setCsvFile(null);
@@ -194,20 +124,13 @@ const Home = () => {
       formData.append('model', mode)
       formData.append('allowLogging', allowLogging)
       
-      // const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
-      const res = await fetch('http://localhost:8000/heavy', {
+      const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
         method: 'POST',
         body: formData,
       });	  
 	  
       if (res.status === 200) {
         const responseBody = await res.json();
-        // // sql
-        // let sqlCode = responseBody['result'];
-        // console.log(sqlCode);
-        // let sqlOut = sqlDb.exec(sqlCode);
-        // console.log(sqlOut);
-        // let asstMsg = JSON.stringify(sqlOut);
         let asstMsg = responseBody.answer;
         setMessages([...updatedMessages, { text: asstMsg, isUser: false, images: responseBody.images }]);
       }
