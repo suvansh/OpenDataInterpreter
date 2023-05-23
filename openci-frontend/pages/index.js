@@ -323,7 +323,7 @@ const Home = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {csvData.slice(1).map((row, index) => (
+                    {csvData.slice(1, 51).map((row, index) => (
                       <tr key={index}>
                         {Object.values(row).map((value, index) => <td key={index}>{value}</td>)}
                       </tr>

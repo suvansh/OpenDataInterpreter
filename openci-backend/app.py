@@ -62,6 +62,8 @@ async def process_file_df(df, headers_info, query, model, allowLogging):
     response = await llm_chains[model].apredict(query=query)
     log(f"LLM Response: {response}", allowLogging)
     output = parse_LLM_response(response)
+    if 'error' in output:
+        return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
     code, out_variable, img_paths_str = output["code"], output["out_variable"], output["img_paths_str"]
     if not check_code(code):
         log("Code check failed.", allowLogging)
