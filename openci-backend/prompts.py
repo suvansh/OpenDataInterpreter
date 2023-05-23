@@ -23,6 +23,11 @@ The columns in the data (and descriptions of some of them) are:
     for col_name, col_info in headers_info.items():
         prompt += f"- {col_name}: {col_info}\n"
     prompt += """
+Here is the output of `df.head()`. You can use it to understand the data format:
+"""
+    prompt += df[list(headers_info.keys())].head().to_string(index=False)
+    prompt += """
+
 Be sure to use only columns specified above.
 You can use the following libraries (with their respective aliases if specified) without importing them.
 
