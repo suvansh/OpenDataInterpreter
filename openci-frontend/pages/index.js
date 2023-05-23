@@ -29,7 +29,7 @@ const Home = () => {
   const [mode, setMode] = useState("GPT-4");
   const [allowLogging, setAllowLogging] = useState(false);
   
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
 
   const handleSendMessage = (message) => {
@@ -124,7 +124,8 @@ const Home = () => {
       formData.append('model', mode)
       formData.append('allowLogging', allowLogging)
       
-      const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
+      // const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
+      const res = await fetch('http://localhost:8000/heavy', {
         method: 'POST',
         body: formData,
       });	  
@@ -194,7 +195,7 @@ const Home = () => {
           <div className="flex flex-grow overflow-auto">
             <div className="w-full lg:w-1/2 overflow-auto">
               <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
-                <div className="mb-4 bg-gray-400">
+                <div className="mb-4 bg-gray-200 dark:bg-gray-500">
                   <Dropzone
                     inputContent="Drag a CSV file or Click to Browse"
                     onChangeStatus={handleChangeStatus}
