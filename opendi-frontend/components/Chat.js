@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 
-function Chat({ messages, setMessages, onSendMessage, isSubmitting }) {
-  const [newMessage, setNewMessage] = useState('');
+function Chat({ messages, setMessages, newMessage, setNewMessage, onSendMessage, isSubmitting }) {
+  
 
   const handleSubmit = (e) => {
     e.preventDefault();

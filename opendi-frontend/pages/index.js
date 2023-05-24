@@ -24,6 +24,7 @@ const Home = () => {
   const [isErrorMessageVisible, setIsErrorMessageVisible] = useState(false);
 
   const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mode, setMode] = useState("GPT-4");
@@ -32,10 +33,9 @@ const Home = () => {
   const [darkMode, setDarkMode] = useState(true);
 
   const sampleCsvFiles = [
-    { name: 'Freshmen Weights (kg)', url: '/csvs/freshman_kgs.csv' },
-    { name: 'Tallahassee Housing', url: '/csvs/zillow.csv' },
-    { name: 'Baseball Players', url: '/csvs/mlb_players.csv' },
-    // add more as needed...
+    { name: 'Freshmen Weights (kg)', url: '/csvs/freshman_kgs.csv', sampleQuery: 'Make a scatterplot of the men\'s weight in April vs September. Draw a line indicating no weight change.' },
+    { name: 'Tallahassee Housing', url: '/csvs/zillow.csv', sampleQuery: 'Create a scatterplot showing how square footage varies by year, coloring points by their price.' },
+    { name: 'Baseball Players', url: '/csvs/mlb_players.csv', sampleQuery: 'Make a bar graph of the average shortstop height of each team, in descending order.' },
   ];
   const handleSampleSelect = async (event) => {
     const selectedUrl = event.target.value;
@@ -49,9 +49,17 @@ const Home = () => {
     }
 
     const response = await fetch(selectedUrl);
-    const text = await response.text();
+    let text = await response.text();
+    text = text.replace(/, /g, ',');
     
-    const results = Papa.parse(text);
+    const results = await new Promise((resolve, reject) => {
+      Papa.parse(text, {
+        skipEmptyLines: true,
+        complete: resolve,
+        error: reject,
+      });
+    });
+    
   
     const trimmedHeaders = results.data[0].map(header => header.trim());
   
@@ -66,6 +74,9 @@ const Home = () => {
     setHeaderValues(initialHeaderValues);
     setDropzoneKey(prevKey => prevKey + 1);
     setCsvFile(null);
+    
+    const sampleQuery = sampleCsvFiles.find(sample => sample.url === selectedUrl).sampleQuery;
+    setNewMessage(sampleQuery);
   };
 
 
@@ -89,8 +100,11 @@ const Home = () => {
     if (status === 'done') {
 
       setCsvFile(file); // Keep a reference to the file itself
+      let text = await file.text();
+      text = text.replace(/, /g, ',');
       const results = await new Promise((resolve, reject) => {
-        Papa.parse(file, {
+        Papa.parse(text, {
+          skipEmptyLines: true,
           complete: resolve,
           error: reject,
         });
@@ -284,7 +298,7 @@ const Home = () => {
                       value={headerValues[header] || ''}
                       onChange={(e) => handleInputChange(header, e.target.value)}
                     />
-                    <button type="button" onClick={() => removeHeader(index, header)} className="ml-2 py-2">✕</button>
+                    <button type="button" onClick={() => removeHeader(index, header)} className="ml-2 py-2 text-gray-700 dark:text-gray-200">✕</button>
                   </div>
                 ))}
                 <ModeButtons mode={mode} onModeChange={setMode}/>
@@ -322,12 +336,15 @@ const Home = () => {
                     ))}
                   </tbody>
                 </table>
+                {csvData.length > 51 ? <p className="text-gray-700 dark:text-gray-200">(Showing first 50 rows...)</p> : null}
               </div>
             </div>
             <div className="w-full lg:w-1/2 overflow-auto" style={{ maxHeight: `calc(90vh - 100px)` }}>
               <Chat 
                 messages={messages}
                 setMessages={setMessages}
+                newMessage={newMessage}
+                setNewMessage={setNewMessage}
                 onSendMessage={handleSubmit}
                 isSubmitting={isSubmitting}
               />
