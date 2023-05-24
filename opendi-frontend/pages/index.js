@@ -15,7 +15,6 @@ import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 
 const Home = () => {
   const [csvFile, setCsvFile] = useState(null);
-  const [sqlDb, setSqlDb] = useState(null);
   const [csvData, setCsvData] = useState([]);
   const [csvHeaders, setCsvHeaders] = useState([]);
   const [headerValues, setHeaderValues] = useState({});
