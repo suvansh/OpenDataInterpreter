@@ -18,6 +18,7 @@ const Home = () => {
   const [csvData, setCsvData] = useState([]);
   const [csvHeaders, setCsvHeaders] = useState([]);
   const [headerValues, setHeaderValues] = useState({});
+  const [dropzoneKey, setDropzoneKey] = useState(0);
 
   const [apiError, setApiError] = useState('');
   const [isErrorMessageVisible, setIsErrorMessageVisible] = useState(false);
@@ -29,6 +30,43 @@ const Home = () => {
   const [allowLogging, setAllowLogging] = useState(false);
   
   const [darkMode, setDarkMode] = useState(true);
+
+  const sampleCsvFiles = [
+    { name: 'Freshmen Weights (kg)', url: '/csvs/freshman_kgs.csv' },
+    { name: 'Tallahassee Housing', url: '/csvs/zillow.csv' },
+    { name: 'Baseball Players', url: '/csvs/mlb_players.csv' },
+    // add more as needed...
+  ];
+  const handleSampleSelect = async (event) => {
+    const selectedUrl = event.target.value;
+    if (selectedUrl === "") {
+      setCsvHeaders([]);
+      setCsvData([]);
+      setHeaderValues({});
+      setDropzoneKey(prevKey => prevKey + 1);
+      setCsvFile(null);
+      return;
+    }
+
+    const response = await fetch(selectedUrl);
+    const text = await response.text();
+    
+    const results = Papa.parse(text);
+  
+    const trimmedHeaders = results.data[0].map(header => header.trim());
+  
+    setCsvHeaders(trimmedHeaders);
+    setCsvData(results.data);
+  
+    const initialHeaderValues = trimmedHeaders.reduce((acc, header) => {
+      acc[header] = '';
+      return acc;
+    }, {});
+  
+    setHeaderValues(initialHeaderValues);
+    setDropzoneKey(prevKey => prevKey + 1);
+    setCsvFile(null);
+  };
 
 
   const handleSendMessage = (message) => {
@@ -49,6 +87,7 @@ const Home = () => {
 
   const handleChangeStatus = async ({ meta, file }, status) => {
     if (status === 'done') {
+
       setCsvFile(file); // Keep a reference to the file itself
       const results = await new Promise((resolve, reject) => {
         Papa.parse(file, {
@@ -57,7 +96,6 @@ const Home = () => {
         });
       });
 
-      // Trim the headers
       const trimmedHeaders = results.data[0].map(header => header.trim());
       
       setCsvHeaders(trimmedHeaders);
@@ -69,6 +107,9 @@ const Home = () => {
       }, {});
 
       setHeaderValues(initialHeaderValues);
+
+      // Reset the sample select dropdown
+      document.getElementById('sampleSelect').value = '';
     }
     else if (status === 'removed') {
       setCsvFile(null);
@@ -99,7 +140,7 @@ const Home = () => {
   const handleSubmit = async (e, newMessage = null) => {
     e.preventDefault();
 
-    if (!csvFile) {
+    if (!csvFile && csvData.length === 0) {
       setApiError('No CSV file uploaded.');
       setIsErrorMessageVisible(true);
   
@@ -113,7 +154,15 @@ const Home = () => {
     try {
       setIsSubmitting(true);
       let formData = new FormData();
-      formData.append('file', csvFile);
+      if (csvFile) {
+        // If a file was uploaded, append it to the form data
+        formData.append('file', csvFile);
+      } else {
+        // If a file was not uploaded, create a Blob from the csvData and append it
+        const csvContent = csvData.map(row => row.join(",")).join("\n");
+        const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+        formData.append('file', csvBlob, 'sample.csv');
+      }
       formData.append('columnData', JSON.stringify(headerValues));
       const updatedMessages = newMessage
         ? [...messages, { text: newMessage, isUser: true, images: [] }]
@@ -195,7 +244,27 @@ const Home = () => {
             <div className="w-full lg:w-1/2 overflow-auto">
               <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
                 <div className="mb-4 bg-gray-200 dark:bg-gray-500">
+                  <select
+                    id="sampleSelect"
+                    defaultValue=""
+                    onChange={handleSampleSelect}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "none",
+                      borderRadius: "5px",
+                      boxShadow: "0px 2px 5px rgba(0,0,0,0.15)",
+                      fontSize: "16px",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    <option value="">Select a sample CSV...</option>
+                    {sampleCsvFiles.map((file, index) => (
+                      <option key={index} value={file.url}>{file.name}</option>
+                    ))}
+                  </select>
                   <Dropzone
+                    key={dropzoneKey}
                     inputContent="Drag a CSV file or Click to Browse"
                     onChangeStatus={handleChangeStatus}
                     accept=".csv"
