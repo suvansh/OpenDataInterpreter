@@ -56,7 +56,7 @@ const CodeBlock = ({ index, initialCodeString, language, runSqlQuery }) => {
           onKeyDown={handleKeyPress}
         />
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-          <button onClick={resetCode} style={{ marginRight: '10px' }}>
+          <button onClick={resetCode} title="Revert to initial code" style={{ marginRight: '10px' }}>
             <FontAwesomeIcon icon={faRefresh} size="sm" className="text-gray-800 dark:text-gray-200" />
           </button>
           {errorMessage && <p className="text-red-500 dark:text-red-400">{errorMessage}</p>}

@@ -8,7 +8,7 @@ import ModeButtons from '../components/ModeButtons'
 import Tooltip from '../components/Tooltip'
 import SocialMetaTags from '../components/SocialMetaTags';
 import NavBar from '../components/NavBar'
-import initSqlJs from 'sql.js';
+import createSqlJsTable from '../lib/SqlUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 
@@ -30,16 +30,39 @@ const Home = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [model, setModel] = useState("GPT-4");
-  const [endpoint, setEndpoint] = useState("heavy");
+  const [lang, setLang] = useState("python");
   const [allowLogging, setAllowLogging] = useState(false);
   
   const [darkMode, setDarkMode] = useState(true);
 
+
+  useEffect(() => {
+    if (csvData.length === 0) {
+      setSqlDb(null);
+      return;
+    }
+    const innerCreateSqlJsTable = async () => {
+      try {
+        // Wait for createSqlJsTable to finish and then update the state
+        const db = await createSqlJsTable(csvData);
+        setSqlDb(db);
+      } catch (err) {
+        const msg = 'Error loading CSV file into SQL.js. Please use Python instead for this file.';
+        setTempApiError(msg, 10);
+        alert(msg);
+        return;
+      }
+    };
+    
+    innerCreateSqlJsTable();
+  }, [csvData]);
+
   const sampleCsvFiles = [
-    { name: 'Freshmen Weights (kg)', url: '/csvs/freshman_kgs.csv', sampleQuery: 'Make a scatterplot of the men\'s weight in April vs September. Draw a line indicating no weight change.' },
-    { name: 'Tallahassee Housing', url: '/csvs/zillow.csv', sampleQuery: 'Create a scatterplot showing how square footage varies by year, coloring points by their price.' },
-    { name: 'Baseball Players', url: '/csvs/mlb_players.csv', sampleQuery: 'Make a bar graph of the average shortstop height of each team, in descending order.' },
+    { name: 'Freshmen Weights (kg)', url: '/csvs/freshman_kgs.csv', sampleQuery: 'Make a scatterplot of the men\'s weight in April vs September. Draw a line indicating no weight change.', sampleLang: 'python', sampleModel: 'GPT-4' },
+    { name: 'Tallahassee Housing', url: '/csvs/zillow.csv', sampleQuery: 'Create a scatterplot showing how square footage varies by year, coloring points by their price.', sampleLang: 'python', sampleModel: 'GPT-4' },
+    { name: 'Baseball Players', url: '/csvs/mlb_players.csv', sampleQuery: 'Make a table of the average Shortstop age of each team, in descending order.', sampleLang: 'sql', sampleModel: 'GPT-3.5' },
   ];
+
   const handleSampleSelect = async (event) => {
     const selectedUrl = event.target.value;
     if (selectedUrl === "") {
@@ -62,10 +85,6 @@ const Home = () => {
         error: reject,
       });
     });
-    
-    // Wait for createSqlJsTable to finish and then update the state
-    const db = await createSqlJsTable(results.data);
-    setSqlDb(db);
   
     const trimmedHeaders = results.data[0].map(header => header.trim());
   
@@ -81,8 +100,10 @@ const Home = () => {
     setDropzoneKey(prevKey => prevKey + 1);
     setCsvFile(null);
     
-    const sampleQuery = sampleCsvFiles.find(sample => sample.url === selectedUrl).sampleQuery;
-    setNewMessage(sampleQuery);
+    const sampleItem = sampleCsvFiles.find(sample => sample.url === selectedUrl);
+    setNewMessage(sampleItem.sampleQuery);
+    setLang(sampleItem.sampleLang);
+    setModel(sampleItem.sampleModel);
   };
 
   useEffect(() => {
@@ -97,71 +118,7 @@ const Home = () => {
     setDarkMode(prevDarkMode => !prevDarkMode);
   };  
 
-  function inferTypes(csvData) {
-    let types = {};
-    let headers = csvData[0];
-    let firstRow = csvData[1];
-
-    // zip headers and first row together
-    for (let i = 0; i < headers.length; i++) {
-      let value = firstRow[i];
-      let inferredType;
   
-      // Check if the value can be parsed as a number
-      if (!isNaN(value) && isFinite(value)) {
-        // Distinguish between integers and floats
-        inferredType = value.indexOf('.') === -1 ? 'INT' : 'FLOAT';
-      } else if (new Date(value).toString() !== 'Invalid Date') {
-        // Check if the value can be parsed as a date
-        inferredType = 'DATE';
-      } else {
-        // If it can't be parsed as a number or a date, assume it's a string
-        inferredType = 'STRING';
-      }
-  
-      types[headers[i]] = inferredType;
-    }
-  
-    return types;
-  }
-
-  async function createSqlJsTable(data) {
-    const types = inferTypes(data);
-    let sqlCreateTable = `CREATE TABLE mytable (`;
-    for (let key in types) {
-      sqlCreateTable += `\`${key}\` ${types[key]},`;
-    }
-    sqlCreateTable = sqlCreateTable.slice(0, -1); // Remove the trailing comma
-    sqlCreateTable += `);`;
-
-  
-    // Create insert query
-    let sqlInsert = `INSERT INTO mytable (\`${Object.keys(types).join('`, `')}\`) VALUES `;
-    data.slice(1).forEach(row => {
-      if ((row.length === 0) || (row[0].trim() === '')) return; // Skip empty rows
-      let values = Object.values(row).map(val => 
-        isNaN(val) ? `'${val}'` : val  // Check if the value is numeric or string
-      ).join(', ');
-
-      sqlInsert += `(${values}), `;
-    });
-
-    sqlInsert = sqlInsert.slice(0, -2); // Remove the trailing comma and space
-    sqlInsert += ';';
-
-  
-    // Initialize the SQL.js library
-    const SQL = await initSqlJs({locateFile: file => "https://sql.js.org/dist/sql-wasm.wasm"});
-  
-    // Create a database
-    const db = new SQL.Database();
-  
-    // Execute the create table and insert data queries
-    db.exec(sqlCreateTable);
-    db.exec(sqlInsert);
-  
-    return db;  // Return the database for further use
-  }
 
   const handleChangeStatus = async ({ meta, file }, status) => {
     if (status === 'done') {
@@ -176,10 +133,6 @@ const Home = () => {
           error: reject,
         });
       });
-
-      // Wait for createSqlJsTable to finish and then update the state
-      const db = await createSqlJsTable(results.data);
-      setSqlDb(db);
 
       const trimmedHeaders = results.data[0].map(header => header.trim());
       
@@ -203,7 +156,15 @@ const Home = () => {
       setHeaderValues({});
     }
   };
-
+  
+  const setTempApiError = (message, timeoutSeconds = 5) => {
+    setApiError(message);
+    setIsErrorMessageVisible(true);
+  
+    setTimeout(() => {
+      setIsErrorMessageVisible(false); // Hide the error message after 5 seconds
+    }, timeoutSeconds * 1000);
+  }
 
   const handleInputChange = (header, value) => {
     setHeaderValues(prevValues => ({
@@ -226,20 +187,14 @@ const Home = () => {
     e.preventDefault();
 
     if (!csvFile && csvData.length === 0) {
-      setApiError('No CSV file uploaded.');
-      setIsErrorMessageVisible(true);
-  
-      setTimeout(() => {
-        setIsErrorMessageVisible(false); // Hide the error message after 5 seconds
-      }, 5000);
-  
+      setTempApiError('No CSV file uploaded.');
       return;
     }
 
     try {
       setIsSubmitting(true);
       let formData = new FormData();
-      if (endpoint == "heavy") {  // if light endpoint, don't send csv
+      if (lang == "python") {  // only send csv if python mode
         if (csvFile) {
           // If a file was uploaded, append it to the form data
           formData.append('file', csvFile);
@@ -257,22 +212,30 @@ const Home = () => {
       setMessages(updatedMessages);
       formData.append('messages', JSON.stringify(updatedMessages));
       formData.append('model', model);
+      formData.append('lang', lang);
       formData.append('allowLogging', allowLogging);
       
       
-      const res = await fetch(`https://openci-server.brilliantly.ai/${endpoint}`, {
-      // const res = await fetch(`http://localhost:8000/${endpoint}`, {
+      const res = await fetch(`https://openci-server.brilliantly.ai/heavy`, {
+      // const res = await fetch(`http://localhost:8000/heavy`, {
         method: 'POST',
         body: formData,
-      });	  
+      });
+      console.log(res.ok);
 	  
-      if (res.status === 200) {
+      if (res.ok) {
         const responseBody = await res.json();
-        let asstMsg = "";
-        if (responseBody.type == "sql") {
+        let asstMsg;
+        if (responseBody.lang == "sql") {
           let sqlCode = responseBody['code'];
           try {
-            let sqlOut = sqlDb.exec(sqlCode)[0];
+            let result = sqlDb.exec(sqlCode);
+            let sqlOut;
+            if (result.length === 0) {
+              sqlOut = { columns: ["<Empty>"], values: [["<Empty>"]] };
+            } else {
+              sqlOut = result[0];
+            }
             asstMsg = JSON.stringify(sqlOut);
           } catch (err) {
             asstMsg = JSON.stringify({"columns":["ERR"],"values":[[err.message]]});
@@ -284,21 +247,18 @@ const Home = () => {
                                             isUser: false,
                                             images: responseBody.images,
                                             code: responseBody.code,
-                                            type: responseBody.type }]);
+                                            lang: responseBody.lang }]);
+      } else {
+        setTempApiError('An error occurred while processing your file.');
       }
     } catch (err) {
 	    console.log(err);
       setMessages(prevMessages => prevMessages.slice(0, -1));
       if (err.response && err.response.status === 413) {
-        setApiError('File too large. Please upload a file smaller than 25MB.');
+        setTempApiError('File too large. Please upload a file smaller than 25MB.');
       } else {
-        setApiError('An error occurred while processing your file.');
+        setTempApiError('An error occurred while processing your file.');
       }
-	    setIsErrorMessageVisible(true); // Show the error message
-  
-      setTimeout(() => {
-        setIsErrorMessageVisible(false); // Hide the error message after 5 seconds
-      }, 5000);
     } finally {
       setIsSubmitting(false); // End submission regardless of success or failure
     }
@@ -398,10 +358,10 @@ const Home = () => {
                   onOptionChange={setModel}
                 />
                 <ModeButtons 
-                  options={[{'value': 'heavy', 'name': 'Python'}, {'value': 'light', 'name': 'SQL (in-browser)'}]}
-                  tooltipContent={<><p>"Python" sends the file to our server but is more capable. "SQL" only sends metadata to the server, but can't handle graphs or correlations.</p></>}
-                  selectedOption={endpoint}
-                  onOptionChange={setEndpoint}
+                  options={[{'value': 'python', 'name': 'Python'}, {'value': 'sql', 'name': 'SQL (in-browser)'}]}
+                  tooltipContent={<><p>"Python" sends the file to our server but is more robust/capable. "SQL" only sends column names/descriptions to the server, but can't handle missing data or generate graphs.</p></>}
+                  selectedOption={lang}
+                  onOptionChange={setLang}
                 />
                 <div className="flex items-center my-2">
                   <input

@@ -48,9 +48,8 @@ app.add_middleware(
 )
 
 
-async def process_file(headers_info, query, model, allowLogging, df=None):
-    resp_type = "sql" if df is None else "python"
-    if resp_type == "sql":  # SQL mode – no dataframe
+async def process_file(headers_info, query, model, lang, allowLogging, df=None):
+    if lang == "sql":  # SQL mode – no dataframe
         template = get_sql_prompt(headers_info)
     else:  # Python mode – use dataframe
         template = get_python_prompt(df, headers_info)
@@ -61,8 +60,8 @@ async def process_file(headers_info, query, model, allowLogging, df=None):
     }
     response = await llm_chains[model].apredict(query=query)
     log(f"LLM Response: {response}", allowLogging)
-    if resp_type == "sql":  # SQL mode – return code
-        return {"type": resp_type, "code": response}
+    if lang == "sql":  # SQL mode – return code
+        return {"lang": lang, "code": response}
     else:
         output = parse_LLM_response(response)
         if 'error' in output:
@@ -87,7 +86,7 @@ async def process_file(headers_info, query, model, allowLogging, df=None):
         log(f"Final output: {out_str}", allowLogging)
         image_urls = await upload_images(img_paths)
         log(f"Image URLs: {image_urls}", allowLogging)
-        return {"answer": out_str, "images": image_urls, "type": resp_type, "code": code}
+        return {"answer": out_str, "images": image_urls, "lang": lang, "code": code}
     
 def get_standalone_query(messages, allowLogging):
     if len(messages) > 1:
@@ -101,32 +100,34 @@ def get_standalone_query(messages, allowLogging):
     return query
 
 @app.post("/heavy")
-async def handle_query_heavy(file: UploadFile = File(...), columnData: str = Form(...), messages: str = Form(...), model: str = Form(...), allowLogging: bool = Form(...)):
-    file_bytes = await file.read()
+async def handle_query_heavy(columnData: str = Form(...), messages: str = Form(...), model: str = Form(...), lang: str = Form(...), allowLogging: bool = Form(...), file: UploadFile = File(None)):
+    assert (lang == "python" and file is not None) or (lang == "sql" and file is None)
     message_list = json.loads(messages)
     headers_info = json.loads(columnData)
     log(f"Received request ({model}): {message_list[-1]['text']}", allowLogging)
 
-    if (cached := example_queries.get(message_list[-1]['text'])):
+    if file is not None:
+        file_bytes = await file.read()
+        df = pd.read_csv(io.BytesIO(file_bytes), skipinitialspace=True)
+        to_hash = file_bytes
+    else:
+        df = None
+        to_hash = columnData.encode('UTF-8')
+    if (cached := example_queries.get(message_list[-1]['text'])) and cached['lang'] == lang:
         sha256_hash = hashlib.sha256()
-        sha256_hash.update(file_bytes)
-        file_hash = sha256_hash.hexdigest()
-        if file_hash == cached['file_hash']:
+        sha256_hash.update(to_hash)
+        hashed = sha256_hash.hexdigest()
+        if hashed == cached['hash']:
             log("Cached file hit.", allowLogging)
-            return {key: cached[key] for key in ['answer', 'images']}   
+            dupe = cached.copy()
+            dupe.pop('hash')
+            return dupe
     
-    df = pd.read_csv(io.BytesIO(file_bytes), skipinitialspace=True)    
+    
     query = get_standalone_query(message_list, allowLogging)
-    result = await process_file(headers_info, query, model, allowLogging, df=df)
+    result = await process_file(headers_info, query, model, lang, allowLogging, df=df)
     return result
 
-@app.post("/light")
-async def handle_query_light(columnData: str = Form(...), messages: str = Form(...), model: str = Form(...), allowLogging: bool = Form(...)):
-    headers_info = json.loads(columnData)
-    message_list = json.loads(messages)
-    query = get_standalone_query(message_list, allowLogging)
-    result = await process_file(headers_info, query, model, allowLogging)
-    return result
 
 if __name__ == "__main__":
     import uvicorn

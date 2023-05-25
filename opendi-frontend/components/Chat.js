@@ -20,12 +20,19 @@ function Chat({ messages, setMessages, newMessage, setNewMessage, onSendMessage,
 
   const runSqlQuery = async (sqlQuery, index, setErrorMessage) => {
     try {
-      var sqlOut = sqlDb.exec(sqlQuery)[0];
+      var result = sqlDb.exec(sqlQuery);
     } catch (e) {
       setErrorMessage(e.message);
       return;
     }
     setErrorMessage(null);
+
+    let sqlOut;
+    if (result.length === 0) {
+      sqlOut = { columns: ["<Empty>"], values: [["<Empty>"]] };
+    } else {
+      sqlOut = result[0];
+    }
     
     let asstMsg = JSON.stringify(sqlOut);
     // update indexth message with new message
@@ -38,12 +45,12 @@ function Chat({ messages, setMessages, newMessage, setNewMessage, onSendMessage,
     <div className="border-2 border-gray-300 p-4 flex flex-col h-full justify-between">
       <div className="overflow-y-scroll h-128 flex flex-col space-y-2">
         {messages.map((message, index) => (
-          <ChatMessage key={index} index={index} message={message.text} isUser={message.isUser} images={message.images} code={message.code} type={message.type} runSqlQuery={runSqlQuery} />
+          <ChatMessage key={index} index={index} message={message} runSqlQuery={runSqlQuery} />
         ))}
       </div>
 
       <div className="flex items-center justify-between mt-4">
-        <button type="button" title="Clear conversation" className="bg-red-500 text-white px-3 py-1 rounded-md mr-2" onClick={handleClearMessages}>
+        <button type="button" title="Clear conversation" className="bg-red-500 text-white px-3 py-1 rounded-md mr-2" disabled={isSubmitting} onClick={handleClearMessages}>
           <FontAwesomeIcon icon={ faTrash } />
         </button>
 
