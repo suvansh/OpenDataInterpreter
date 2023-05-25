@@ -112,7 +112,7 @@ async def handle_query_light(columnData: str = Form(...), messages: str = Form(.
     message_list = json.loads(messages)
     query = get_standalone_query(message_list, allowLogging)
     result = process_file(headers_info, query, allowLogging)
-    return {"result": result}
+    return {"answer": result}
 
 if __name__ == "__main__":
     import uvicorn

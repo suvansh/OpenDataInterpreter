@@ -1,4 +1,4 @@
-def get_sql_prompt(headers_info):
+def get_plotly_prompt(headers_info):
     prompt = f"""You are a helpful expert data analyst. Your task is to write JavaScript code that uses plotly to generate graphs in response to questions about data, and place these graphs in a div with id 'graphDiv'.
     The data is in a variable called 'csvData' that is an array of objects. Each object represents a row in the data. The keys of each object will be the column names of the data. There are {len(headers_info)} columns.
     The columns in the data (and descriptions of some of them) are:
@@ -13,6 +13,23 @@ def get_sql_prompt(headers_info):
     Question: Make a scatterplot of the tuition of the school vs the number of students.
     JavaScript code: function plotData(data) { Plotly.newPlot('graphDiv', [{x: csvData.map(row => row['tuition']), y: csvData.map(row => row['students']), type: 'scatter'}]); }
     """
+    
+    return prompt
+
+def get_sql_prompt(headers_info):
+    prompt = f"""You are a helpful expert data analyst. Your task is to write SQL code for the table called `mytable` to answer questions about the data.
+    The data is in a variable called 'csvData' that is an array of objects. Each object represents a row in the data. The keys of each object will be the column names of the data. There are {len(headers_info)} columns.
+    The columns in the data (and descriptions of some of them) are:
+    """
+    for col_name, col_info in headers_info.items():
+        prompt += f"- {col_name}: {col_info}\n"
+    prompt += f"""\nOnly write SQL code to be executed to answer the question, with no other output. If you include other output it will cause an error.
+    Here are some examples of questions you might be asked. The examples use made up columns, but you should use the columns in the data as described above.
+    """
+    prompt += """Question: How many people are in each state?
+    SQL code: SELECT state, COUNT(*) FROM mytable GROUP BY state;
+    Question: What is the average tuition of schools in each city, ordered by average tuition?
+    SQL code: SELECT city, AVG(tuition) as avg FROM mytable GROUP BY city ORDER BY avg;"""
     
     return prompt
 

@@ -107,6 +107,7 @@ const Home = () => {
     const db = new SQL.Database();
   
     // Execute the create table and insert data queries
+    console.log(sqlCreateTable);
     db.exec(sqlCreateTable);
     db.exec(sqlInsert);
   
@@ -138,8 +139,8 @@ const Home = () => {
 
       // Wait for createSqlJsTable to finish and then update the state
       // TODO sql stuff later
-      // const db = await createSqlJsTable(results.data);
-      // setSqlDb(db);
+      const db = await createSqlJsTable(results.data);
+      setSqlDb(db);
     }
     else if (status === 'removed') {
       setCsvFile(null);
@@ -195,20 +196,21 @@ const Home = () => {
       formData.append('allowLogging', allowLogging)
       
       // const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
-      const res = await fetch('http://localhost:8000/heavy', {
+      const res = await fetch('http://localhost:8000/light', {
         method: 'POST',
         body: formData,
       });	  
 	  
       if (res.status === 200) {
         const responseBody = await res.json();
-        // // sql
-        // let sqlCode = responseBody['result'];
-        // console.log(sqlCode);
-        // let sqlOut = sqlDb.exec(sqlCode);
-        // console.log(sqlOut);
-        // let asstMsg = JSON.stringify(sqlOut);
-        let asstMsg = responseBody.answer;
+        console.log(responseBody);
+        // sql
+        let sqlCode = responseBody['answer'];
+        console.log(sqlCode);
+        let sqlOut = sqlDb.exec(sqlCode);
+        console.log(sqlOut);
+        let asstMsg = JSON.stringify(sqlOut);
+        // let asstMsg = responseBody.answer;
         setMessages([...updatedMessages, { text: asstMsg, isUser: false, images: responseBody.images }]);
       }
     } catch (err) {
