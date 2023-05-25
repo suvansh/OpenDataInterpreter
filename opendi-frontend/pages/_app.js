@@ -2,7 +2,7 @@ import '../styles/globals.css'
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { GA_TRACKING_ID, pageview } from '../lib/GoogleAnalytics'
-import Head from 'next/head';
+import Script from 'next/script'
 
 
 function MyApp({ Component, pageProps }) {
@@ -24,15 +24,12 @@ function MyApp({ Component, pageProps }) {
   
   return (
     <>
-      <Head>
-        {/* Global Site Tag (gtag.js) - Google Analytics */}
-        <script
-          async
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
+      {/* Global Site Tag (gtag.js) - Google Analytics */}
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
+      />
+      <Script strategy="lazyOnload">
+        {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
@@ -40,10 +37,9 @@ function MyApp({ Component, pageProps }) {
             gtag('config', '${GA_TRACKING_ID}', {
               page_path: window.location.pathname,
             });
-          `,
-          }}
-        />
-      </Head>
+          `}
+      </Script>
+      <Script strategy="lazyOnload" src="https://buttons.github.io/buttons.js" />
       <Component {...pageProps} />
     </>
   )

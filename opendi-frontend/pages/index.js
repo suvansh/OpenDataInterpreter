@@ -282,7 +282,7 @@ const Home = () => {
           style={{height: 'calc(100vh - 100px)', marginTop: '60px'}}
         >
           <h1
-            className="text-6xl font-bold text-center pb-1"
+            className="text-6xl font-bold text-center pb-2"
             style={{
                 fontFamily: 'Quicksand',
                 fontWeight: 'bold',
@@ -302,6 +302,10 @@ const Home = () => {
               </button>pen Data Interpreter
             </span>
           </h1>
+          <div className="pl-4 text-center">
+            <a className="github-button" href="https://github.com/suvansh" data-color-scheme="no-preference: dark; light: light; dark: dark;" aria-label="Follow @suvansh on GitHub">Follow @suvansh</a>
+            <a className="github-button" href="https://github.com/suvansh/OpenDataInterpreter" data-color-scheme="no-preference: dark; light: light; dark: dark;" aria-label="Star suvansh/OpenDataInterpreter on GitHub">Star</a>  
+          </div>
           <p className="text-center text-gray-700 dark:text-gray-200 pb-2">Read about how it works <a href="https://www.brilliantly.ai/blog/data-interpreter">here</a>.</p>
           <div className="flex flex-grow overflow-auto">
             <div className="w-full lg:w-1/2 overflow-auto">
