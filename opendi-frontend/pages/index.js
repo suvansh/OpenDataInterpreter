@@ -221,7 +221,6 @@ const Home = () => {
         method: 'POST',
         body: formData,
       });
-      console.log(res.ok);
 	  
       if (res.ok) {
         const responseBody = await res.json();
@@ -359,7 +358,7 @@ const Home = () => {
                 />
                 <ModeButtons 
                   options={[{'value': 'python', 'name': 'Python'}, {'value': 'sql', 'name': 'SQL (in-browser)'}]}
-                  tooltipContent={<><p>"Python" sends the file to our server but is more robust/capable. "SQL" only sends column names/descriptions to the server, but can't handle missing data or generate graphs.</p></>}
+                  tooltipContent={<><p>&quot;Python&quot; sends the file to our server but is more robust/capable. &quot;SQL&quot; only sends column names/descriptions to the server, but can't handle missing data or generate graphs.</p></>}
                   selectedOption={lang}
                   onOptionChange={setLang}
                 />
