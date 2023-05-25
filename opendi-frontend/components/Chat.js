@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 
-function Chat({ messages, setMessages, newMessage, setNewMessage, onSendMessage, isSubmitting }) {
+function Chat({ messages, setMessages, newMessage, setNewMessage, onSendMessage, isSubmitting, sqlDb }) {
   
 
   const handleSubmit = (e) => {
@@ -18,11 +18,27 @@ function Chat({ messages, setMessages, newMessage, setNewMessage, onSendMessage,
     setMessages([]);
   };
 
+  const runSqlQuery = async (sqlQuery, index, setErrorMessage) => {
+    try {
+      var sqlOut = sqlDb.exec(sqlQuery)[0];
+    } catch (e) {
+      setErrorMessage(e.message);
+      return;
+    }
+    setErrorMessage(null);
+    
+    let asstMsg = JSON.stringify(sqlOut);
+    // update indexth message with new message
+    let newMessages = [...messages];
+    newMessages[index].text = asstMsg;
+    setMessages(newMessages);
+  }
+
   return (
     <div className="border-2 border-gray-300 p-4 flex flex-col h-full justify-between">
       <div className="overflow-y-scroll h-128 flex flex-col space-y-2">
         {messages.map((message, index) => (
-          <ChatMessage key={index} message={message.text} isUser={message.isUser} images={message.images} />
+          <ChatMessage key={index} index={index} message={message.text} isUser={message.isUser} images={message.images} code={message.code} type={message.type} runSqlQuery={runSqlQuery} />
         ))}
       </div>
 

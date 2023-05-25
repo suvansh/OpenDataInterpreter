@@ -8,6 +8,7 @@ import ModeButtons from '../components/ModeButtons'
 import Tooltip from '../components/Tooltip'
 import SocialMetaTags from '../components/SocialMetaTags';
 import NavBar from '../components/NavBar'
+import initSqlJs from 'sql.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 
@@ -16,6 +17,7 @@ import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 const Home = () => {
   const [csvFile, setCsvFile] = useState(null);
   const [csvData, setCsvData] = useState([]);
+  const [sqlDb, setSqlDb] = useState(null);
   const [csvHeaders, setCsvHeaders] = useState([]);
   const [headerValues, setHeaderValues] = useState({});
   const [dropzoneKey, setDropzoneKey] = useState(0);
@@ -27,7 +29,8 @@ const Home = () => {
   const [newMessage, setNewMessage] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mode, setMode] = useState("GPT-4");
+  const [model, setModel] = useState("GPT-4");
+  const [endpoint, setEndpoint] = useState("heavy");
   const [allowLogging, setAllowLogging] = useState(false);
   
   const [darkMode, setDarkMode] = useState(true);
@@ -60,6 +63,9 @@ const Home = () => {
       });
     });
     
+    // Wait for createSqlJsTable to finish and then update the state
+    const db = await createSqlJsTable(results.data);
+    setSqlDb(db);
   
     const trimmedHeaders = results.data[0].map(header => header.trim());
   
@@ -77,11 +83,6 @@ const Home = () => {
     
     const sampleQuery = sampleCsvFiles.find(sample => sample.url === selectedUrl).sampleQuery;
     setNewMessage(sampleQuery);
-  };
-
-
-  const handleSendMessage = (message) => {
-    setMessages([...messages, { text: message, isUser: true, images: [] }]);
   };
 
   useEffect(() => {
@@ -128,24 +129,26 @@ const Home = () => {
     const types = inferTypes(data);
     let sqlCreateTable = `CREATE TABLE mytable (`;
     for (let key in types) {
-      sqlCreateTable += `${key} ${types[key]},`;
+      sqlCreateTable += `\`${key}\` ${types[key]},`;
     }
     sqlCreateTable = sqlCreateTable.slice(0, -1); // Remove the trailing comma
     sqlCreateTable += `);`;
+
   
     // Create insert query
-    let sqlInsert = `INSERT INTO mytable (${Object.keys(types).join(', ')}) VALUES `;
+    let sqlInsert = `INSERT INTO mytable (\`${Object.keys(types).join('`, `')}\`) VALUES `;
     data.slice(1).forEach(row => {
       if ((row.length === 0) || (row[0].trim() === '')) return; // Skip empty rows
       let values = Object.values(row).map(val => 
         isNaN(val) ? `'${val}'` : val  // Check if the value is numeric or string
       ).join(', ');
-  
+
       sqlInsert += `(${values}), `;
     });
-  
+
     sqlInsert = sqlInsert.slice(0, -2); // Remove the trailing comma and space
     sqlInsert += ';';
+
   
     // Initialize the SQL.js library
     const SQL = await initSqlJs({locateFile: file => "https://sql.js.org/dist/sql-wasm.wasm"});
@@ -154,7 +157,6 @@ const Home = () => {
     const db = new SQL.Database();
   
     // Execute the create table and insert data queries
-    console.log(sqlCreateTable);
     db.exec(sqlCreateTable);
     db.exec(sqlInsert);
   
@@ -175,6 +177,10 @@ const Home = () => {
         });
       });
 
+      // Wait for createSqlJsTable to finish and then update the state
+      const db = await createSqlJsTable(results.data);
+      setSqlDb(db);
+
       const trimmedHeaders = results.data[0].map(header => header.trim());
       
       setCsvHeaders(trimmedHeaders);
@@ -186,11 +192,6 @@ const Home = () => {
       }, {});
 
       setHeaderValues(initialHeaderValues);
-
-      // Wait for createSqlJsTable to finish and then update the state
-      // TODO sql stuff later
-      const db = await createSqlJsTable(results.data);
-      setSqlDb(db);
       
       // Reset the sample select dropdown
       document.getElementById('sampleSelect').value = '';
@@ -238,14 +239,16 @@ const Home = () => {
     try {
       setIsSubmitting(true);
       let formData = new FormData();
-      if (csvFile) {
-        // If a file was uploaded, append it to the form data
-        formData.append('file', csvFile);
-      } else {
-        // If a file was not uploaded, create a Blob from the csvData and append it
-        const csvContent = csvData.map(row => row.join(",")).join("\n");
-        const csvBlob = new Blob([csvContent], { type: 'text/csv' });
-        formData.append('file', csvBlob, 'sample.csv');
+      if (endpoint == "heavy") {  // if light endpoint, don't send csv
+        if (csvFile) {
+          // If a file was uploaded, append it to the form data
+          formData.append('file', csvFile);
+        } else {
+          // If a file was not uploaded, create a Blob from the csvData and append it
+          const csvContent = csvData.map(row => row.join(",")).join("\n");
+          const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+          formData.append('file', csvBlob, 'sample.csv');
+        }
       }
       formData.append('columnData', JSON.stringify(headerValues));
       const updatedMessages = newMessage
@@ -253,27 +256,35 @@ const Home = () => {
         : [...messages];
       setMessages(updatedMessages);
       formData.append('messages', JSON.stringify(updatedMessages));
-      formData.append('model', mode);
+      formData.append('model', model);
       formData.append('allowLogging', allowLogging);
       
       
-      const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
-      // const res = await fetch('http://localhost:8000/heavy', {
+      const res = await fetch(`https://openci-server.brilliantly.ai/${endpoint}`, {
+      // const res = await fetch(`http://localhost:8000/${endpoint}`, {
         method: 'POST',
         body: formData,
       });	  
 	  
       if (res.status === 200) {
         const responseBody = await res.json();
-        console.log(responseBody);
-        // // sql
-        // let sqlCode = responseBody['answer'];
-        // console.log(sqlCode);
-        // let sqlOut = sqlDb.exec(sqlCode);
-        // console.log(sqlOut);
-        // let asstMsg = JSON.stringify(sqlOut);
-        let asstMsg = responseBody.answer;
-        setMessages([...updatedMessages, { text: asstMsg, isUser: false, images: responseBody.images }]);
+        let asstMsg = "";
+        if (responseBody.type == "sql") {
+          let sqlCode = responseBody['code'];
+          try {
+            let sqlOut = sqlDb.exec(sqlCode)[0];
+            asstMsg = JSON.stringify(sqlOut);
+          } catch (err) {
+            asstMsg = JSON.stringify({"columns":["ERR"],"values":[[err.message]]});
+          }
+        } else {
+          asstMsg = responseBody.answer;
+        }
+        setMessages([...updatedMessages, { text: asstMsg,
+                                            isUser: false,
+                                            images: responseBody.images,
+                                            code: responseBody.code,
+                                            type: responseBody.type }]);
       }
     } catch (err) {
 	    console.log(err);
@@ -312,7 +323,7 @@ const Home = () => {
           style={{height: 'calc(100vh - 100px)', marginTop: '60px'}}
         >
           <h1
-            className="text-6xl font-bold text-center mb-4"
+            className="text-6xl font-bold text-center pb-1"
             style={{
                 fontFamily: 'Quicksand',
                 fontWeight: 'bold',
@@ -332,6 +343,7 @@ const Home = () => {
               </button>pen Data Interpreter
             </span>
           </h1>
+          <p className="text-center text-gray-700 dark:text-gray-200 pb-2">Read about how it works <a href="https://www.brilliantly.ai/blog/data-interpreter">here</a>.</p>
           <div className="flex flex-grow overflow-auto">
             <div className="w-full lg:w-1/2 overflow-auto">
               <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
@@ -379,7 +391,18 @@ const Home = () => {
                     <button type="button" onClick={() => removeHeader(index, header)} className="ml-2 py-2 text-gray-700 dark:text-gray-200">✕</button>
                   </div>
                 ))}
-                <ModeButtons mode={mode} onModeChange={setMode}/>
+                <ModeButtons 
+                  options={['GPT-4', 'GPT-3.5']}
+                  tooltipContent={<><p>GPT-3.5 is ~5x faster and 15x cheaper than GPT-4, but less reliable for Python mode. Both work well for SQL mode.</p></>}
+                  selectedOption={model}
+                  onOptionChange={setModel}
+                />
+                <ModeButtons 
+                  options={[{'value': 'heavy', 'name': 'Python'}, {'value': 'light', 'name': 'SQL (in-browser)'}]}
+                  tooltipContent={<><p>"Python" sends the file to our server but is more capable. "SQL" only sends metadata to the server, but can't handle graphs or correlations.</p></>}
+                  selectedOption={endpoint}
+                  onOptionChange={setEndpoint}
+                />
                 <div className="flex items-center my-2">
                   <input
                     type="checkbox"
@@ -425,6 +448,7 @@ const Home = () => {
                 setNewMessage={setNewMessage}
                 onSendMessage={handleSubmit}
                 isSubmitting={isSubmitting}
+                sqlDb={sqlDb}
               />
             </div>
           </div>

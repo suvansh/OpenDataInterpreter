@@ -1,3 +1,0 @@
-2023-05-24 20:41:18,092 - __main__ - INFO - SQL code: SELECT COUNT(*) FROM mytable;
-2023-05-24 20:41:47,412 - __main__ - INFO - Standalone Query: What is the count of men who weigh over 70 kgs?
-2023-05-24 20:41:50,248 - __main__ - INFO - SQL code: SELECT COUNT(*) FROM mytable WHERE Sex = 'M' AND Weight_Sep > 70;

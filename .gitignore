@@ -5,3 +5,4 @@
 opendi-backend/app.log
 
 **/*.png
+!public/*.png

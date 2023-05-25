@@ -48,15 +48,12 @@ app.add_middleware(
 )
 
 
-def process_file(headers_info, query, allowLogging):
-    prompt = get_sql_prompt(headers_info)
-    chat = ChatOpenAI()
-    sql_code = chat([SystemMessage(content=prompt), HumanMessage(content=query)]).content
-    log(f"SQL code: {sql_code}", allowLogging)
-    return sql_code
-
-async def process_file_df(df, headers_info, query, model, allowLogging):
-    template = get_python_prompt(df, headers_info)
+async def process_file(headers_info, query, model, allowLogging, df=None):
+    resp_type = "sql" if df is None else "python"
+    if resp_type == "sql":  # SQL mode – no dataframe
+        template = get_sql_prompt(headers_info)
+    else:  # Python mode – use dataframe
+        template = get_python_prompt(df, headers_info)
     prompt = PromptTemplate(template=template, input_variables=["query"])
     llm_chains = {
         "GPT-3.5": LLMChain(prompt=prompt, llm=ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.9), verbose=debug),
@@ -64,30 +61,33 @@ async def process_file_df(df, headers_info, query, model, allowLogging):
     }
     response = await llm_chains[model].apredict(query=query)
     log(f"LLM Response: {response}", allowLogging)
-    output = parse_LLM_response(response)
-    if 'error' in output:
-        return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
-    code, out_variable, img_paths_str = output["code"], output["out_variable"], output["img_paths_str"]
-    if not check_code(code):
-        log("Code check failed.", allowLogging)
-        return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
-    try:
-        new_globals = run_code(df, code)
-        # Get output
-        out_str = eval(out_variable, new_globals)
-        img_paths = eval(img_paths_str, new_globals)
-    except Exception as e:
-        logger.exception("An error occurred: %s", e)
-        return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
-    
-    if len(img_paths) == 1 and not img_paths[0].endswith("png"):
-        img_paths[0] = new_globals.get(img_paths[0], img_paths[0])
-    img_paths = [img_path for img_path in img_paths if img_path]
-    
-    log(f"Final output: {out_str}", allowLogging)
-    image_urls = await upload_images(img_paths)
-    log(f"Image URLs: {image_urls}", allowLogging)
-    return {"answer": out_str, "images": image_urls}
+    if resp_type == "sql":  # SQL mode – return code
+        return {"type": resp_type, "code": response}
+    else:
+        output = parse_LLM_response(response)
+        if 'error' in output:
+            return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
+        code, out_variable, img_paths_str = output["code"], output["out_variable"], output["img_paths_str"]
+        if not check_code(code):
+            log("Code check failed.", allowLogging)
+            return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
+        try:
+            new_globals = run_code(df, code)
+            # Get output
+            out_str = eval(out_variable, new_globals)
+            img_paths = eval(img_paths_str, new_globals)
+        except Exception as e:
+            logger.exception("An error occurred: %s", e)
+            return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
+        
+        if len(img_paths) == 1 and not img_paths[0].endswith("png"):
+            img_paths[0] = new_globals.get(img_paths[0], img_paths[0])
+        img_paths = [img_path for img_path in img_paths if img_path]
+        
+        log(f"Final output: {out_str}", allowLogging)
+        image_urls = await upload_images(img_paths)
+        log(f"Image URLs: {image_urls}", allowLogging)
+        return {"answer": out_str, "images": image_urls, "type": resp_type, "code": code}
     
 def get_standalone_query(messages, allowLogging):
     if len(messages) > 1:
@@ -105,6 +105,7 @@ async def handle_query_heavy(file: UploadFile = File(...), columnData: str = For
     file_bytes = await file.read()
     message_list = json.loads(messages)
     headers_info = json.loads(columnData)
+    log(f"Received request ({model}): {message_list[-1]['text']}", allowLogging)
 
     if (cached := example_queries.get(message_list[-1]['text'])):
         sha256_hash = hashlib.sha256()
@@ -116,16 +117,16 @@ async def handle_query_heavy(file: UploadFile = File(...), columnData: str = For
     
     df = pd.read_csv(io.BytesIO(file_bytes), skipinitialspace=True)    
     query = get_standalone_query(message_list, allowLogging)
-    result = await process_file_df(df, headers_info, query, model, allowLogging)
+    result = await process_file(headers_info, query, model, allowLogging, df=df)
     return result
 
 @app.post("/light")
-async def handle_query_light(columnData: str = Form(...), messages: str = Form(...), allowLogging: bool = Form(...)):
+async def handle_query_light(columnData: str = Form(...), messages: str = Form(...), model: str = Form(...), allowLogging: bool = Form(...)):
     headers_info = json.loads(columnData)
     message_list = json.loads(messages)
     query = get_standalone_query(message_list, allowLogging)
-    result = process_file(headers_info, query, allowLogging)
-    return {"answer": result}
+    result = await process_file(headers_info, query, model, allowLogging)
+    return result
 
 if __name__ == "__main__":
     import uvicorn

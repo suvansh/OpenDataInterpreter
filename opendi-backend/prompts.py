@@ -29,7 +29,9 @@ def get_sql_prompt(headers_info):
     prompt += """Question: How many people are in each state?
     SQL code: SELECT state, COUNT(*) FROM mytable GROUP BY state;
     Question: What is the average tuition of schools in each city, ordered by average tuition?
-    SQL code: SELECT city, AVG(tuition) as avg FROM mytable GROUP BY city ORDER BY avg;"""
+    SQL code: SELECT city, AVG(tuition) as avg FROM mytable GROUP BY city ORDER BY avg;
+    Question: {query}
+    SQL code: """
     
     return prompt
 
