@@ -1,6 +1,8 @@
 import Image from 'next/image';
+import CodeBlock from './CodeBlock';
+import SqlResultTable from './SqlResultTable';
 
-function ChatMessage({ message, isUser, images }) {
+function ChatMessage({ index, message, isUser, images, code, type, runSqlQuery }) {
   if (isUser) {
     return (
       <div className="rounded-lg px-4 py-2 m-2 max-w-xs bg-blue-500 text-white self-end">
@@ -11,7 +13,15 @@ function ChatMessage({ message, isUser, images }) {
   else {
     return (
       <>
-        <div className="rounded-lg px-4 py-2 m-2 max-w-xs bg-gray-300 text-black self-start" dangerouslySetInnerHTML={{__html: message}} />
+        <CodeBlock index={index} initialCodeString={code} language={type} runSqlQuery={runSqlQuery} />
+        <div className="rounded-lg px-4 py-2 m-2 max-w-xs bg-gray-300 text-black self-start">
+          {type == "sql" ? 
+              <SqlResultTable data={JSON.parse(message)} /> 
+              : 
+              <div dangerouslySetInnerHTML={{__html: message}} />
+          }
+      </div>
+
         {images && (
           <div>
             {images.map((image, index) => (

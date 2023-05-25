@@ -1,34 +1,30 @@
 import React from 'react';
 import Tooltip from './Tooltip';
 
-const ModeButtons = ({mode, onModeChange}) => {
+const ModeButtons = ({ selectedOption, onOptionChange, options, tooltipContent }) => {
   const handleChange = (event) => {
-    onModeChange(event.target.value);
+    onOptionChange(event.target.value);
   };
 
   return (
     <div>
-      <label className="mode-button text-gray-700 dark:text-gray-200">
-        <input
-          type="radio"
-          name="GPT-3.5"
-          value="GPT-3.5"
-          checked={mode === 'GPT-3.5'}
-          onChange={handleChange}
-        />
-        GPT-3.5
-      </label>
-      <label className="mode-button text-gray-700 dark:text-gray-200">
-        <input
-          type="radio"
-          name="GPT-4"
-          value="GPT-4"
-          checked={mode === 'GPT-4'}
-          onChange={handleChange}
-        />
-        GPT-4
-      </label>
-      <Tooltip content={ <>GPT-3.5 is ~5x faster than GPT-4, but less reliable.</> } />
+      {options.map((option, index) => {
+        const value = typeof option === 'string' ? option : option.value;
+        const name = typeof option === 'string' ? option : option.name;
+        return (
+          <label key={index} className="mode-button text-gray-700 dark:text-gray-200">
+            <input
+              type="radio"
+              name={name}
+              value={value}
+              checked={selectedOption === value}
+              onChange={handleChange}
+            />
+            {name}
+          </label>
+        )
+      })}
+      <Tooltip content={tooltipContent} />
     </div>
   );
 };

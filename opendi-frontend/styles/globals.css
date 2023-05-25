@@ -3,6 +3,12 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+a {
+  color: #21b2a5;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 .tooltip {
     position: relative;
     display: inline-block;
