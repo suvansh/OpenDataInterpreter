@@ -8,7 +8,6 @@ import ModeButtons from '../components/ModeButtons'
 import Tooltip from '../components/Tooltip'
 import SocialMetaTags from '../components/SocialMetaTags';
 import NavBar from '../components/NavBar'
-import initSqlJs from 'sql.js';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 
@@ -16,21 +15,69 @@ import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 
 const Home = () => {
   const [csvFile, setCsvFile] = useState(null);
-  const [sqlDb, setSqlDb] = useState(null);
   const [csvData, setCsvData] = useState([]);
   const [csvHeaders, setCsvHeaders] = useState([]);
   const [headerValues, setHeaderValues] = useState({});
+  const [dropzoneKey, setDropzoneKey] = useState(0);
 
   const [apiError, setApiError] = useState('');
   const [isErrorMessageVisible, setIsErrorMessageVisible] = useState(false);
 
   const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mode, setMode] = useState("GPT-4");
   const [allowLogging, setAllowLogging] = useState(false);
   
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+
+  const sampleCsvFiles = [
+    { name: 'Freshmen Weights (kg)', url: '/csvs/freshman_kgs.csv', sampleQuery: 'Make a scatterplot of the men\'s weight in April vs September. Draw a line indicating no weight change.' },
+    { name: 'Tallahassee Housing', url: '/csvs/zillow.csv', sampleQuery: 'Create a scatterplot showing how square footage varies by year, coloring points by their price.' },
+    { name: 'Baseball Players', url: '/csvs/mlb_players.csv', sampleQuery: 'Make a bar graph of the average shortstop height of each team, in descending order.' },
+  ];
+  const handleSampleSelect = async (event) => {
+    const selectedUrl = event.target.value;
+    if (selectedUrl === "") {
+      setCsvHeaders([]);
+      setCsvData([]);
+      setHeaderValues({});
+      setDropzoneKey(prevKey => prevKey + 1);
+      setCsvFile(null);
+      return;
+    }
+
+    const response = await fetch(selectedUrl);
+    let text = await response.text();
+    text = text.replace(/, /g, ',');
+    
+    const results = await new Promise((resolve, reject) => {
+      Papa.parse(text, {
+        skipEmptyLines: true,
+        complete: resolve,
+        error: reject,
+      });
+    });
+    
+  
+    const trimmedHeaders = results.data[0].map(header => header.trim());
+  
+    setCsvHeaders(trimmedHeaders);
+    setCsvData(results.data);
+  
+    const initialHeaderValues = trimmedHeaders.reduce((acc, header) => {
+      acc[header] = '';
+      return acc;
+    }, {});
+  
+    setHeaderValues(initialHeaderValues);
+    setDropzoneKey(prevKey => prevKey + 1);
+    setCsvFile(null);
+    
+    const sampleQuery = sampleCsvFiles.find(sample => sample.url === selectedUrl).sampleQuery;
+    setNewMessage(sampleQuery);
+  };
 
 
   const handleSendMessage = (message) => {
@@ -116,15 +163,18 @@ const Home = () => {
 
   const handleChangeStatus = async ({ meta, file }, status) => {
     if (status === 'done') {
+
       setCsvFile(file); // Keep a reference to the file itself
+      let text = await file.text();
+      text = text.replace(/, /g, ',');
       const results = await new Promise((resolve, reject) => {
-        Papa.parse(file, {
+        Papa.parse(text, {
+          skipEmptyLines: true,
           complete: resolve,
           error: reject,
         });
       });
 
-      // Trim the headers
       const trimmedHeaders = results.data[0].map(header => header.trim());
       
       setCsvHeaders(trimmedHeaders);
@@ -141,6 +191,9 @@ const Home = () => {
       // TODO sql stuff later
       const db = await createSqlJsTable(results.data);
       setSqlDb(db);
+      
+      // Reset the sample select dropdown
+      document.getElementById('sampleSelect').value = '';
     }
     else if (status === 'removed') {
       setCsvFile(null);
@@ -171,7 +224,7 @@ const Home = () => {
   const handleSubmit = async (e, newMessage = null) => {
     e.preventDefault();
 
-    if (!csvFile) {
+    if (!csvFile && csvData.length === 0) {
       setApiError('No CSV file uploaded.');
       setIsErrorMessageVisible(true);
   
@@ -185,18 +238,27 @@ const Home = () => {
     try {
       setIsSubmitting(true);
       let formData = new FormData();
-      formData.append('file', csvFile);
+      if (csvFile) {
+        // If a file was uploaded, append it to the form data
+        formData.append('file', csvFile);
+      } else {
+        // If a file was not uploaded, create a Blob from the csvData and append it
+        const csvContent = csvData.map(row => row.join(",")).join("\n");
+        const csvBlob = new Blob([csvContent], { type: 'text/csv' });
+        formData.append('file', csvBlob, 'sample.csv');
+      }
       formData.append('columnData', JSON.stringify(headerValues));
       const updatedMessages = newMessage
         ? [...messages, { text: newMessage, isUser: true, images: [] }]
         : [...messages];
       setMessages(updatedMessages);
       formData.append('messages', JSON.stringify(updatedMessages));
-      formData.append('model', mode)
-      formData.append('allowLogging', allowLogging)
+      formData.append('model', mode);
+      formData.append('allowLogging', allowLogging);
       
-      // const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
-      const res = await fetch('http://localhost:8000/light', {
+      
+      const res = await fetch('https://openci-server.brilliantly.ai/heavy', {
+      // const res = await fetch('http://localhost:8000/heavy', {
         method: 'POST',
         body: formData,
       });	  
@@ -204,13 +266,13 @@ const Home = () => {
       if (res.status === 200) {
         const responseBody = await res.json();
         console.log(responseBody);
-        // sql
-        let sqlCode = responseBody['answer'];
-        console.log(sqlCode);
-        let sqlOut = sqlDb.exec(sqlCode);
-        console.log(sqlOut);
-        let asstMsg = JSON.stringify(sqlOut);
-        // let asstMsg = responseBody.answer;
+        // // sql
+        // let sqlCode = responseBody['answer'];
+        // console.log(sqlCode);
+        // let sqlOut = sqlDb.exec(sqlCode);
+        // console.log(sqlOut);
+        // let asstMsg = JSON.stringify(sqlOut);
+        let asstMsg = responseBody.answer;
         setMessages([...updatedMessages, { text: asstMsg, isUser: false, images: responseBody.images }]);
       }
     } catch (err) {
@@ -234,14 +296,14 @@ const Home = () => {
   return (
     <>
       <Head>
-        <title>Open Code Interpreter: Talk to your data.</title>
+        <title>Open Data Interpreter: Talk to your data.</title>
       </Head>
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <SocialMetaTags
-          title="Open Code Interpreter: Talk to your data."
+          title="Open Data Interpreter: Talk to your data."
           description="Made with love and AI by Brilliantly."
-          url="https://codeinterpreter.brilliantly.ai/"
-          imageUrl="https://codeinterpreter.brilliantly.ai/logo.png"
+          url="https://datainterpreter.brilliantly.ai/"
+          imageUrl="https://datainterpreter.brilliantly.ai/logo.png"
         />
         <NavBar />
         
@@ -267,14 +329,34 @@ const Home = () => {
                 style={{ color: '#B67EEF' }}
               >
                 <FontAwesomeIcon icon={darkMode ? faSun : faMoon} />
-              </button>pen Code Interpreter
+              </button>pen Data Interpreter
             </span>
           </h1>
           <div className="flex flex-grow overflow-auto">
             <div className="w-full lg:w-1/2 overflow-auto">
               <form onSubmit={handleSubmit} className="w-full max-w-7xl bg-white dark:bg-gray-800 shadow-md rounded px-8 pt-6 pb-8 mb-4">
-                <div className="mb-4 bg-gray-400">
+                <div className="mb-4 bg-gray-200 dark:bg-gray-500">
+                  <select
+                    id="sampleSelect"
+                    defaultValue=""
+                    onChange={handleSampleSelect}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "none",
+                      borderRadius: "5px",
+                      boxShadow: "0px 2px 5px rgba(0,0,0,0.15)",
+                      fontSize: "16px",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    <option value="">Select a sample CSV...</option>
+                    {sampleCsvFiles.map((file, index) => (
+                      <option key={index} value={file.url}>{file.name}</option>
+                    ))}
+                  </select>
                   <Dropzone
+                    key={dropzoneKey}
                     inputContent="Drag a CSV file or Click to Browse"
                     onChangeStatus={handleChangeStatus}
                     accept=".csv"
@@ -294,7 +376,7 @@ const Home = () => {
                       value={headerValues[header] || ''}
                       onChange={(e) => handleInputChange(header, e.target.value)}
                     />
-                    <button type="button" onClick={() => removeHeader(index, header)} className="ml-2 py-2">✕</button>
+                    <button type="button" onClick={() => removeHeader(index, header)} className="ml-2 py-2 text-gray-700 dark:text-gray-200">✕</button>
                   </div>
                 ))}
                 <ModeButtons mode={mode} onModeChange={setMode}/>
@@ -332,12 +414,15 @@ const Home = () => {
                     ))}
                   </tbody>
                 </table>
+                {csvData.length > 51 ? <p className="text-gray-700 dark:text-gray-200">(Showing first 50 rows...)</p> : null}
               </div>
             </div>
             <div className="w-full lg:w-1/2 overflow-auto" style={{ maxHeight: `calc(90vh - 100px)` }}>
               <Chat 
                 messages={messages}
                 setMessages={setMessages}
+                newMessage={newMessage}
+                setNewMessage={setNewMessage}
                 onSendMessage={handleSubmit}
                 isSubmitting={isSubmitting}
               />

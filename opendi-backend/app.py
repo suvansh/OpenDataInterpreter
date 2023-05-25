@@ -1,13 +1,16 @@
+import pandas as pd
+import json
+import io
+import hashlib
+
 from starlette.middleware import Middleware
 from fastapi import FastAPI, UploadFile, Form, File
 from fastapi.middleware.cors import CORSMiddleware
-import pandas as pd
-import json
-import os
 
 from prompts import get_sql_prompt, get_python_prompt
 from utils import check_code, parse_LLM_response, run_code, upload_images
 from settings import debug
+from example_queries import example_queries
 
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage, AIMessage, SystemMessage
@@ -99,9 +102,19 @@ def get_standalone_query(messages, allowLogging):
 
 @app.post("/heavy")
 async def handle_query_heavy(file: UploadFile = File(...), columnData: str = Form(...), messages: str = Form(...), model: str = Form(...), allowLogging: bool = Form(...)):
-    df = pd.read_csv(file.file, skipinitialspace=True)
-    headers_info = json.loads(columnData)
+    file_bytes = await file.read()
     message_list = json.loads(messages)
+    headers_info = json.loads(columnData)
+
+    if (cached := example_queries.get(message_list[-1]['text'])):
+        sha256_hash = hashlib.sha256()
+        sha256_hash.update(file_bytes)
+        file_hash = sha256_hash.hexdigest()
+        if file_hash == cached['file_hash']:
+            log("Cached file hit.", allowLogging)
+            return {key: cached[key] for key in ['answer', 'images']}   
+    
+    df = pd.read_csv(io.BytesIO(file_bytes), skipinitialspace=True)    
     query = get_standalone_query(message_list, allowLogging)
     result = await process_file_df(df, headers_info, query, model, allowLogging)
     return result
