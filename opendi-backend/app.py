@@ -65,11 +65,13 @@ async def process_file(headers_info, query, model, lang, allowLogging, df=None):
     else:
         output = parse_LLM_response(response)
         if 'error' in output:
-            return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
-        code, out_variable, img_paths_str = output["code"], output["out_variable"], output["img_paths_str"]
+            log("LLM error: " + output['error'], allowLogging)
+            return {"answer": "[Error] Got an error parsing the LLM response.", "images": [], "lang": lang, "code": "Code could not be parsed." }
+        # code, out_variable, img_paths_str = output["code"], output["out_variable"], output["img_paths_str"]
+        code, out_variable, img_paths_str = "print(5/0)", output["out_variable"], output["img_paths_str"]
         if not check_code(code):
             log("Code check failed.", allowLogging)
-            return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
+            return {"answer": "[Error] The generated code was not safe to run.", "images": [], "lang": lang, "code": code }
         try:
             new_globals = run_code(df, code)
             # Get output
@@ -77,7 +79,7 @@ async def process_file(headers_info, query, model, lang, allowLogging, df=None):
             img_paths = eval(img_paths_str, new_globals)
         except Exception as e:
             logger.exception("An error occurred: %s", e)
-            return {"answer": "Sorry, I don't know how to answer that question. Clearing the conversation and/or rephrasing may help, or I may just not have the data to answer.", "images": []}
+            return {"answer": "[Error] Got an error while running the code.", "images": [], "lang": lang, "code": code }
         
         if len(img_paths) == 1 and not img_paths[0].endswith("png"):
             img_paths[0] = new_globals.get(img_paths[0], img_paths[0])
