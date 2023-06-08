@@ -87,9 +87,10 @@ const Home = () => {
     });
   
     const trimmedHeaders = results.data[0].map(header => header.trim());
+    const csvDataTrimmedHeaders = [trimmedHeaders, ...results.data.slice(1)];
   
     setCsvHeaders(trimmedHeaders);
-    setCsvData(results.data);
+    setCsvData(csvDataTrimmedHeaders);
   
     const initialHeaderValues = trimmedHeaders.reduce((acc, header) => {
       acc[header] = '';
