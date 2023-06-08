@@ -26,9 +26,10 @@ function MyApp({ Component, pageProps }) {
     <>
       {/* Global Site Tag (gtag.js) - Google Analytics */}
       <Script
+        strategy="lazyOnload"
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
       />
-      <Script strategy="lazyOnload">
+      <Script id="ga-config" strategy="lazyOnload">
         {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -39,7 +40,7 @@ function MyApp({ Component, pageProps }) {
             });
           `}
       </Script>
-      <Script strategy="lazyOnload" src="https://buttons.github.io/buttons.js" />
+      <Script strategy="lazyOnload" id="github-buttons" src="https://buttons.github.io/buttons.js" />
       <Component {...pageProps} />
     </>
   )
